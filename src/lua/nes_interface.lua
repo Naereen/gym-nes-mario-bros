@@ -25,7 +25,8 @@ end
 
 -- called once when emulator starts
 function nes_init()
-  emu.speedmode("maximum")
+  -- emu.speedmode("maximum")
+  emu.speedmode("normal")
 
   for x = 0, 255 do
     screen[x] = {}
@@ -63,14 +64,17 @@ end
 
 function nes_process_command()
   if not pipe_in then
-    return
+    return false
   end
 
   local line = pipe_in:read()
   if line ~= nil then
     print('received command: ', line)
     handle_command(line)
+    return true
   end
+
+  return false
 end
 
 function nes_ask_for_command()

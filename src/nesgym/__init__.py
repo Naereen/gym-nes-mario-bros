@@ -1,5 +1,6 @@
-from .nesenv import NESEnv
+import os
 from gym.envs.registration import register
+from .nesenv import NESEnv
 
 register(
     id='nesgym/NESEnv-v0',

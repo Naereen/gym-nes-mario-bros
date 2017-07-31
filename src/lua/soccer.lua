@@ -12,12 +12,14 @@ end
 nes_init()
 
 while true do
-  nes_ask_for_command()
-  nes_process_command()
+  local has_command = nes_process_command()
 
-  emu.frameadvance()
-  get_reward()
-  if emu.framecount() % screen_update_interval == 0 then
-    nes_update_screen()
+  if has_command then
+    emu.frameadvance()
+    get_reward()
+    if emu.framecount() % screen_update_interval == 0 then
+      nes_update_screen()
+    end
+    nes_ask_for_command()
   end
 end
