@@ -2,7 +2,6 @@
 screen = {} -- screen pixels [x,y] = p
 pipe_out = nil -- for sending data(output e.g. screen pixels, reward) back to client
 pipe_in = nil -- for getting data(input e.g. controller status change) from client
-full_screen_update = true  -- whether send full screen update or difference
 
 SEP = string.format('%c', 0xFF) -- as separator in communication protocol
 IN_SEP = '|'
@@ -22,9 +21,6 @@ function nes_reset()
   -- load state so we don't have to instruct to skip title screen
   state = savestate.object(10)
   savestate.load(state)
-
-  -- everytime the emulator resets, send the full screen
-  full_screen_update = true
 end
 
 -- called once when emulator starts
@@ -56,29 +52,17 @@ function nes_update_screen()
   -- NES only has y values in the range 8 to 231, so we need to offset y values by 8
   local offset_y = 8
 
-  if full_screen_update then
-    write_to_pipe_partial("screen" .. SEP .. framecount .. SEP)
-  else
-    write_to_pipe_partial("screen_diff" .. SEP .. framecount .. SEP)
-  end
+  write_to_pipe_partial("screen" .. SEP .. framecount .. SEP)
   for y = 0, 223 do
     local screen_string = ""
     for x = 0, 255 do
       r, g, b, p = emu.getscreenpixel(x, y + offset_y, false)
       -- offset p by 20 so the content can never be '\n'
-      if full_screen_update then
-        screen_string = screen_string .. string.format("%c", p+20)
-      else
-        if screen[x][y] ~= p then
-          screen_string = screen_string .. string.format("%c%c%c", x, y, p+20)
-          screen[x][y] = p
-        end
-      end
+      screen_string = screen_string .. string.format("%c", p+20)
     end
     write_to_pipe_partial(screen_string)
   end
   write_to_pipe_end()
-  full_screen_update = false
 end
 
 function nes_process_command()

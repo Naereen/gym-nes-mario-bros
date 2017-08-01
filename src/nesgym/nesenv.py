@@ -147,11 +147,11 @@ rgb = {
     '7F': (0, 0, 0),
 }
 
-palette_rgb = [rgb[key] for key in sorted(rgb.keys())]
-palette_grayscale = np.array([(0.299*r+0.587*g+0.114*b)/256.0 for r, g, b in palette_rgb])
+palette_rgb = np.array([rgb[key] for key in sorted(rgb.keys())])
+palette_grayscale = np.array([(0.299*r+0.587*g+0.114*b) / 256.0 for r, g, b in palette_rgb])
 
-SCREEN_WIDTH = 224
-SCREEN_HEIGHT = 256
+SCREEN_WIDTH = 256
+SCREEN_HEIGHT = 224
 
 class NESEnv(gym.Env, utils.EzPickle):
     metadata = {'render.modes': ['human', 'rgb_array']}
@@ -159,7 +159,7 @@ class NESEnv(gym.Env, utils.EzPickle):
     def __init__(self, **kwargs):
         utils.EzPickle.__init__(self)
         self.curr_seed = 0
-        self.screen = np.zeros((SCREEN_WIDTH, SCREEN_HEIGHT), dtype=np.float)
+        self.screen = np.zeros((SCREEN_HEIGHT, SCREEN_WIDTH, 3), dtype=np.uint8)
         self.closed = False
         self.can_send_command = True
         self.command_cond = Condition()
@@ -196,7 +196,7 @@ class NESEnv(gym.Env, utils.EzPickle):
         if self.frame >= self.episode_length:
             done = True
             self.frame = 0
-        obs = self.screen
+        obs = self.screen.copy()
         reward = 0
         info = {}
         with self.command_cond:
@@ -210,10 +210,9 @@ class NESEnv(gym.Env, utils.EzPickle):
         self._write_to_pipe('reset' + SEP)
 
     def _render(self, mode='human', close=False):
-        img = Image.fromarray(self.screen, 'L')
         if self.viewer is None:
             self.viewer = rendering.SimpleImageViewer()
-        self.viewer.imshow(img)
+        self.viewer.imshow(self.screen)
 
     def _seed(self, seed=None):
         self.curr_seed = seeding.hash_seed(seed) % 256
@@ -251,19 +250,10 @@ class NESEnv(gym.Env, utils.EzPickle):
                         self.command_cond.notifyAll()
                 elif msg_type == "screen":
                     screen_pixels = body[2]
-                    pvs = struct.unpack('B'*len(screen_pixels), screen_pixels)
+                    pvs = np.array(struct.unpack('B'*len(screen_pixels), screen_pixels))
                     # palette values received from lua are offset by 20 to avoid '\n's
-                    pvs = np.array(pvs) - 20
-                    # turn palette values to grayscale
-                    pvs = palette_grayscale[pvs]
-                    self.screen = pvs.reshape((SCREEN_WIDTH, SCREEN_HEIGHT))
-                elif msg_type == "screen_diff":
-                    screen_diffs = body[2]
-                    pvs = struct.unpack('B'*len(screen_diffs), screen_diffs)
-                    pvs = np.array(pvs).reshape((-1, 3))
-                    for x, y, p in pvs:
-                        self.screen[x][y] = palette_grayscale[p-20]
-
+                    pvs = np.array(palette_rgb[pvs-20], dtype=np.uint8)
+                    self.screen = pvs.reshape((SCREEN_HEIGHT, SCREEN_WIDTH, 3))
 
     def _open_pipes(self):
         # emulator to client
