@@ -1,7 +1,7 @@
 import os
 import subprocess
 import sys
-from threading import Thread
+from threading import Thread, Condition
 
 import gym
 from gym import utils, spaces
@@ -18,10 +18,18 @@ class NESEnv(gym.Env, utils.EzPickle):
         self.curr_seed = 0
         self.screen = None
         self.closed = False
+        self.can_send_command = True
+        self.command_cond = Condition()
+        episode_time_length_secs = 7
+        frame_skip = 5
+        fps = 60
+        self.episode_length = episode_time_length_secs * fps / frame_skip
+
         self.actions = [
             'U', 'D', 'L', 'R',
             'UR', 'DR', 'URA', 'DRB',
             'A', 'B', 'RB', 'RA']
+        self.action_space = spaces.Discrete(len(self.actions))
         self.frame = 0
 
         self.pipe_in = None
@@ -41,18 +49,21 @@ class NESEnv(gym.Env, utils.EzPickle):
     def _step(self, action):
         self.frame += 1
         done = False
-        if self.frame >= 420:
+        if self.frame >= self.episode_length:
             done = True
             self.frame = 0
         obs = []
         reward = 0
         info = {}
+        with self.command_cond:
+            while not self.can_send_command:
+                self.command_cond.wait()
+            self.can_send_command = False
         self._joypad(self.actions[action])
         return obs, reward, done, info
 
     def _reset(self):
         self._write_to_pipe('reset' + SEP)
-        print('reset env')
 
     def _render(self, mode='human', close=False):
         pass
@@ -87,7 +98,13 @@ class NESEnv(gym.Env, utils.EzPickle):
                 msg_type, frame = body[0], body[1]
                 msg_type = msg_type.decode('ascii')
                 frame = int(frame.decode('ascii'))
-                print('message: ', msg_type, 'frame: ', frame)
+                if msg_type == "wait_for_command":
+                    with self.command_cond:
+                        self.can_send_command = True
+                        self.command_cond.notifyAll()
+                elif msg_type == "screen":
+                    pass
+                # print('message: ', msg_type, 'frame: ', frame)
 
     def _open_pipes(self):
         # emulator to client

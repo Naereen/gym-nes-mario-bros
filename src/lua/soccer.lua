@@ -1,6 +1,6 @@
 require 'nes_interface'
 
-screen_update_interval = 5 -- update screen every screen_update_interval frames
+frame_skip = 4 -- update screen every screen_update_interval frames
 
 function get_reward()
   p1score = memory.readbyte(0x052e)
@@ -12,14 +12,19 @@ end
 nes_init()
 
 while true do
-  local has_command = nes_process_command()
-
-  if has_command then
-    emu.frameadvance()
-    get_reward()
-    if emu.framecount() % screen_update_interval == 0 then
-      nes_update_screen()
-    end
+  if emu.framecount() % frame_skip == 0 then
     nes_ask_for_command()
+    local has_command = nes_process_command()
+    if has_command then
+      emu.frameadvance()
+      get_reward()
+      nes_update_screen()
+    else
+      print('pipe closed')
+      break
+    end
+  else
+    -- skip frames
+    emu.frameadvance()
   end
 end

@@ -25,8 +25,8 @@ end
 
 -- called once when emulator starts
 function nes_init()
-  -- emu.speedmode("maximum")
-  emu.speedmode("normal")
+  emu.speedmode("maximum")
+  -- emu.speedmode("normal")
 
   for x = 0, 255 do
     screen[x] = {}
@@ -52,14 +52,17 @@ function nes_update_screen()
   -- NES only has y values in the range 8 to 231, so we need to offset y values by 8
   local offset_y = 8
 
+  write_to_pipe_partial("screen" .. SEP .. framecount .. SEP)
   for y = 0, 223 do
     local screen_string = ""
     for x = 0, 255 do
       r, g, b, p = emu.getscreenpixel(x, y + offset_y, false)
-      screen_string = screen_string .. string.format("%c", p)
+      -- offset p by 20 so the content can never be '\n'
+      screen_string = screen_string .. string.format("%c", p+20)
     end
-    write_to_pipe("screen" .. SEP .. framecount .. SEP .. y .. SEP .. screen_string)
+    write_to_pipe_partial(screen_string)
   end
+  write_to_pipe_end()
 end
 
 function nes_process_command()
@@ -69,7 +72,6 @@ function nes_process_command()
 
   local line = pipe_in:read()
   if line ~= nil then
-    print('received command: ', line)
     handle_command(line)
     return true
   end
@@ -86,7 +88,6 @@ end
 function handle_command(line)
   local body = split(line, IN_SEP)
   local command = body[1]
-  print("command:", command)
   if command == 'reset' then
     nes_reset()
   elseif command == 'joypad' then
@@ -96,8 +97,8 @@ function handle_command(line)
     for i = 1, #buttons do
       local btn = buttons:sub(i,i)
       local button = COMMAND_TABLE[buttons:sub(i,i)]
-      print('button: ', button)
       joypad_command[button] = true
+      gui.text(5,25, button)
     end
     joypad.set(1, joypad_command)
   end
@@ -109,7 +110,19 @@ function write_to_pipe(data)
     pipe_out:write(data .. SEP .. "\n")
     pipe_out:flush()
   end
-  return
+end
+
+function write_to_pipe_partial(data)
+  if data and pipe_out then
+    pipe_out:write(data)
+  end
+end
+
+function write_to_pipe_end()
+  if pipe_out then
+    pipe_out:write(SEP .. "\n")
+    pipe_out:flush()
+  end
 end
 
 -- split - Splits a string with a specific delimiter

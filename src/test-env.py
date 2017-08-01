@@ -9,10 +9,9 @@ env.reset()
 
 for step in range(10000):
     env.render()
-    action = np.random.randint(12)
+    action = env.action_space.sample()
     obs, reward, done, info = env.step(action)
     if done:
-        print('reset!!')
         env.reset()
 
 env.close()
