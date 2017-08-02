@@ -164,6 +164,7 @@ class NESEnv(gym.Env, utils.EzPickle):
         self.can_send_command = True
         self.command_cond = Condition()
         self.viewer = None
+        self.reward = 0
         episode_time_length_secs = 7
         frame_skip = 5
         fps = 60
@@ -197,17 +198,20 @@ class NESEnv(gym.Env, utils.EzPickle):
             done = True
             self.frame = 0
         obs = self.screen.copy()
-        reward = 0
-        info = {}
+        info = {"frame": self.frame}
         with self.command_cond:
             while not self.can_send_command:
                 self.command_cond.wait()
             self.can_send_command = False
         self._joypad(self.actions[action])
-        return obs, reward, done, info
+        return obs, self.reward, done, info
 
     def _reset(self):
+        self.reward = 0
+        self.screen = np.zeros((SCREEN_HEIGHT, SCREEN_WIDTH, 3), dtype=np.uint8)
         self._write_to_pipe('reset' + SEP)
+        with self.command_cond:
+            self.can_send_command = False
 
     def _render(self, mode='human', close=False):
         if self.viewer is None:
@@ -254,6 +258,8 @@ class NESEnv(gym.Env, utils.EzPickle):
                     # palette values received from lua are offset by 20 to avoid '\n's
                     pvs = np.array(palette_rgb[pvs-20], dtype=np.uint8)
                     self.screen = pvs.reshape((SCREEN_HEIGHT, SCREEN_WIDTH, 3))
+                elif msg_type == "data":
+                    self.reward = int(body[2][:2], 16)
 
     def _open_pipes(self):
         # emulator to client

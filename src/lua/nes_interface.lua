@@ -2,6 +2,7 @@
 screen = {} -- screen pixels [x,y] = p
 pipe_out = nil -- for sending data(output e.g. screen pixels, reward) back to client
 pipe_in = nil -- for getting data(input e.g. controller status change) from client
+flag_reset = false -- indicates whether a reset is happening
 
 SEP = string.format('%c', 0xFF) -- as separator in communication protocol
 IN_SEP = '|'
@@ -18,9 +19,18 @@ COMMAND_TABLE = {
 -- exported common functions start with nes_ prefix
 -- called before each episode
 function nes_reset()
+  flag_reset = true
   -- load state so we don't have to instruct to skip title screen
   state = savestate.object(10)
   savestate.load(state)
+end
+
+function nes_get_reset_flag()
+  return flag_reset
+end
+
+function nes_clear_reset_flag()
+  flag_reset = false
 end
 
 -- called once when emulator starts
@@ -63,6 +73,10 @@ function nes_update_screen()
     write_to_pipe_partial(screen_string)
   end
   write_to_pipe_end()
+end
+
+function nes_send_data(data)
+  write_to_pipe("data" .. SEP .. emu.framecount() .. SEP .. data)
 end
 
 function nes_process_command()
