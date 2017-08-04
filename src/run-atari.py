@@ -4,7 +4,7 @@ import cv2
 from collections import deque
 from gym import spaces
 
-from dqn import model
+from dqn.model import DoubleDQN
 
 def get_env(task, seed):
     env_id = task.env_id
@@ -50,20 +50,19 @@ def atari_main():
     seed = 0 # Use a seed of zero (you may want to randomize the seed!)
     env = get_env(task, seed)
 
-    env.reset()
+    last_obs = env.reset()
 
-    q_pred_model = model.q_model(image_shape=(84, 84, 1), num_actions=env.action_space.n)
-    q_target_model = model.q_model(image_shape=(84, 84, 1), num_actions=env.action_space.n)
+    dqn = DoubleDQN(image_shape=(84, 84, 1), num_actions=env.action_space.n)
 
-    for i in range(100):
-        env.render()
-        obs, reward, done, info = env.step(env.action_space.sample())
-        print('obs:', obs.shape)
-        q_pred = q_pred_model.predict_on_batch(np.array([obs]))
-        q_target = q_target_model.predict_on_batch(np.array([obs_after]))
-        print('q pred:', q_pred)
-        break
-
+    for step in range(1000):
+        # env.render()
+        action = dqn.choose_action(step, last_obs)
+        obs, reward, done, info = env.step(action)
+        dqn.learn(step, last_obs, action, reward, done, info)
+        if done:
+            last_obs = env.reset()
+        else:
+            last_obs = obs
 
 if __name__ == "__main__":
     atari_main()
