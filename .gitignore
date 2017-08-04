@@ -2,3 +2,4 @@
 *.rom
 *.nes
 tmp
+logs/
