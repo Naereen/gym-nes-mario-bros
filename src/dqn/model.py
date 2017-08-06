@@ -5,11 +5,14 @@ from keras.layers import Dense, Input
 from keras.models import Model
 from keras import optimizers
 from keras.callbacks import TensorBoard
+from keras import backend as K
 
 import numpy as np
 
 from .replay_buffer import ReplayBuffer
 from .utils import LinearSchedule, PiecewiseSchedule
+
+from collections import deque
 
 
 def q_function(input_shape, num_actions):
@@ -70,43 +73,70 @@ class DoubleDQN(object):
         input_shape = image_shape[:-1] + (image_shape[-1] * frame_history_len,)
         # used to choose action
         self.base_model = q_model(input_shape, num_actions)
-        self.base_model.compile(optimizer=optimizers.rmsprop(clipnorm=10), loss='mse')
+        self.base_model.compile(optimizer=optimizers.adam(clipnorm=10, lr=1e-4, decay=1e-6, epsilon=1e-4), loss='mse')
         # used to estimate q values
         self.target_model = q_model(input_shape, num_actions)
 
         self.replay_buffer = ReplayBuffer(size=replay_buffer_size, frame_history_len=frame_history_len)
+        # current replay buffer offset
+        self.replay_buffer_idx = 0
 
         self.tensorboard_callback = TensorBoard(log_dir=log_dir)
+        self.latest_losses = deque(maxlen=100)
 
     def choose_action(self, step, obs):
+        self.replay_buffer_idx = self.replay_buffer.store_frame(obs)
         if step < self.training_starts or np.random.rand() < self.exploration.value(step):
             # take random action
             action = np.random.randint(self.num_actions)
         else:
             # take action that results in maximum q value
-            obs = self.replay_buffer.encode_recent_observation()
-            q_vals = self.base_model.predict_on_batch(np.array([obs])).flatten()
+            recent_obs = self.replay_buffer.encode_recent_observation()
+            q_vals = self.base_model.predict_on_batch(np.array([recent_obs])).flatten()
             action = np.argmax(q_vals)
         return action
 
-    def learn(self, step, obs, action, reward, done, info=None):
-        idx = self.replay_buffer.store_frame(obs)
-        self.replay_buffer.store_effect(idx, action, reward, done)
+    def learn(self, step, action, reward, done, info=None):
+        self.replay_buffer.store_effect(self.replay_buffer_idx, action, reward, done)
         if step > self.training_starts and step % self.training_freq == 0:
             self._train()
 
         if step > self.training_starts and step % self.target_update_freq == 0:
             self._update_target()
 
+    def get_learning_rate(self):
+        optimizer = self.base_model.optimizer
+        lr = K.eval(optimizer.lr * (1. / (1. + optimizer.decay * optimizer.iterations)))
+        return lr
+
+    def get_avg_loss(self):
+        if len(self.latest_losses) > 0:
+            return np.mean(np.array(self.latest_losses, dtype=np.float32))
+        else:
+            return None
+
     def _train(self):
         obs_t, action, reward, obs_t1, done_mask = self.replay_buffer.sample(self.training_batch_size)
         q = self.base_model.predict(obs_t)
-        q_t1_max = np.max(self.target_model.predict(obs_t1), axis=1)
-        for idx in range(len(q)):
-            q[idx][action] = reward[idx] + q_t1_max[idx] * self.reward_decay * (1-done_mask[idx])
+        q_t1 = self.target_model.predict(obs_t1)
+        q_t1_max = np.max(q_t1, axis=1)
+        # print('q:\n', q)
+        # print('q_t1:\n', q_t1)
+        # print('q_t1_max:\n', q_t1_max)
+        # print('action:\n', action)
+
+        # for idx in range(len(q)):
+        #     q[idx][action[idx]] = reward[idx] + q_t1_max[idx] * self.reward_decay * (1-done_mask[idx])
+        q[range(len(action)), action] = reward + q_t1_max * self.reward_decay * (1-done_mask)
+        # print('reward:\n', reward)
+        # print('qt1_max:\n', q_t1_max)
+        # print('done mask:\n', done_mask)
+        # print("q': \n", q)
         # self.base_model.fit(obs_t, q, batch_size=self.training_batch_size, epochs=1)
-        self.base_model.train_on_batch(obs_t, q)
+        loss = self.base_model.train_on_batch(obs_t, q)
+        self.latest_losses.append(loss)
 
     def _update_target(self):
         weights = self.base_model.get_weights()
+        # print('update target', weights)
         self.target_model.set_weights(weights)
