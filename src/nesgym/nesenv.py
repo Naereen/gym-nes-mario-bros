@@ -177,18 +177,14 @@ class NESEnv(gym.Env, utils.EzPickle):
         self.action_space = spaces.Discrete(len(self.actions))
         self.frame = 0
 
+        # for communication with emulator
         self.pipe_in = None
         self.pipe_out = None
-        # for communication with emulator
-        self._open_pipes()
+        self.thread_incoming = None
 
-        self.thread_incoming = Thread(target=self._pipe_handler)
-        self.thread_incoming.start()
-
-        args = ['fceux', '--loadlua', os.path.join(package_directory, '../lua/soccer.lua'), '../roms/soccer.nes', '&']
-        proc = subprocess.Popen(' '.join(args), shell=True)
-        print('started proc')
-        proc.communicate()
+        self.rom_file_path = None
+        self.lua_interface_path = None
+        self.emulator_started = False
 
     ## ---------- gym.Env methods -------------
     def _step(self, action):
@@ -207,16 +203,22 @@ class NESEnv(gym.Env, utils.EzPickle):
         return obs, self.reward, done, info
 
     def _reset(self):
+        if not self.emulator_started:
+            self._start_emulator()
         self.reward = 0
         self.screen = np.zeros((SCREEN_HEIGHT, SCREEN_WIDTH, 3), dtype=np.uint8)
         self._write_to_pipe('reset' + SEP)
         with self.command_cond:
             self.can_send_command = False
+        return self.screen
 
     def _render(self, mode='human', close=False):
-        if self.viewer is None:
-            self.viewer = rendering.SimpleImageViewer()
-        self.viewer.imshow(self.screen)
+        if mode == 'human':
+            if self.viewer is None:
+                self.viewer = rendering.SimpleImageViewer()
+            self.viewer.imshow(self.screen)
+        elif mode == 'rgb_array':
+            return self.screen
 
     def _seed(self, seed=None):
         self.curr_seed = seeding.hash_seed(seed) % 256
@@ -227,6 +229,21 @@ class NESEnv(gym.Env, utils.EzPickle):
     ## ------------- end gym.Env --------------
 
     ## ------------- emulator related ------------
+    def _start_emulator(self):
+        if not self.rom_file_path:
+            raise Exception('No rom file specified!')
+        if not self.lua_interface_path:
+            raise Exception("Must specify a lua interface file to get scores!")
+
+        self._open_pipes()
+
+        args = ['fceux', '--loadlua', self.lua_interface_path, self.rom_file_path, '&']
+        proc = subprocess.Popen(' '.join(args), shell=True)
+        print('started proc')
+        proc.communicate()
+        # FIXME: no matter whether it starts, proc.returncode is always zero
+        self.emulator_started = True
+
     def _joypad(self, button):
         self._write_to_pipe('joypad' + SEP + button)
     ## ------------  end emulator  -------------
@@ -268,6 +285,9 @@ class NESEnv(gym.Env, utils.EzPickle):
         self.pipe_out_name = '/tmp/nesgym-pipe-out'
         self._ensure_create_pipe(self.pipe_in_name)
         self._ensure_create_pipe(self.pipe_out_name)
+
+        self.thread_incoming = Thread(target=self._pipe_handler)
+        self.thread_incoming.start()
 
     def _ensure_create_pipe(self, pipe_name):
         if not os.path.exists(pipe_name):

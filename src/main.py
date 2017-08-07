@@ -1,8 +1,14 @@
+import os
 import gym
+from gym import wrappers
 import nesgym
 import numpy as np
 
-env = gym.make('nesgym/NESEnv-v0')
+env = gym.make('nesgym/NekketsuSoccerPK-v0')
+env = nesgym.wrap_nes_env(env)
+expt_dir = '/tmp/soccer/'
+env = wrappers.Monitor(env, os.path.join(expt_dir, "gym"), force=True)
+
 env.reset()
 
 for step in range(10000):
