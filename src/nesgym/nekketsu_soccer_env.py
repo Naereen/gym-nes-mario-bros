@@ -10,8 +10,8 @@ class NekketsuSoccerPKEnv(NESEnv):
         self.lua_interface_path = os.path.join(package_directory, '../lua/soccer.lua')
         self.rom_file_path = os.path.join(package_directory, '../roms/soccer.nes')
         self.actions = [
-            'U', 'D', 'L', 'R', 'UR', 'DR',
-            'A', 'B', 'URA', 'DRA', 'URB', 'DRB', 'RA', 'RB',
+            'R', 'UR', 'DR',
+            'B', 'URB', 'DRB', 'RB',
             'AB', 'RAB', 'URAB', 'DRAB'
         ]
         self.action_space = spaces.Discrete(len(self.actions))

@@ -55,6 +55,6 @@ class ProcessFrame84(gym.Wrapper):
         return _process_frame84(self.env.reset())
 
 def wrap_nes_env(env):
-    env = MaxAndSkipEnv(env, skip=5)
+    env = MaxAndSkipEnv(env, skip=8)
     env = ProcessFrame84(env)
     return env
