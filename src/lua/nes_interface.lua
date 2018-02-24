@@ -12,13 +12,16 @@ flag_reset = false -- indicates whether a reset is happening
 SEP = string.format('%c', 0xFF) -- as separator in communication protocol
 IN_SEP = '|'
 
+-- http://www.fceux.com/web/help/fceux.html?LuaScripting.html
 COMMAND_TABLE = {
   A = "A",
   B = "B",
   U = "up",
   L = "left",
   D = "down",
-  R = "right"
+  R = "right",
+  S = "start",
+  E = "select"
 }
 
 -- exported common functions start with nes_ prefix

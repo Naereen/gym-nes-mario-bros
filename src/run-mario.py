@@ -26,6 +26,13 @@ def get_env():
     return env
 
 
+# Keep a log of the max score seen so far,
+# to plot it as a function of time steps
+def log_max_seen_score(step, max_seen_score):
+    with open("max_seen_score.csv", 'a') as f:
+        f.write("\n{}, {}".format(step, max_seen_score))
+
+
 def mario_main():
     env = get_env()
 
@@ -33,6 +40,9 @@ def mario_main():
 
     max_timesteps = 400000
     max_seen_score = 0
+
+    with open("max_seen_score.csv", 'w') as f:
+        f.write("step, max_seen_score")
 
     exploration_schedule = PiecewiseSchedule(
         [
@@ -73,20 +83,22 @@ def mario_main():
             if len(episode_rewards) > 0:
                 print("last 100 episode mean rewards: ", np.mean(np.array(episode_rewards)))
 
-        # XXX Enable this to see the Python view of the screen
+        # XXX Enable this to see the Python view of the screen (PIL.imshow)
         # env.render()
 
         action = dqn.choose_action(step, last_obs)
         obs, reward, done, info = env.step(action)
         reward_sum_episode += reward
         if done and reward < 0:
-            reward = 0  # force this manually!
+            reward = 0  # force this manually to avoid bug of getting -400 10 times in a row!
         dqn.learn(step, action, reward, done, info)
-        print("Step", step, "\t action =", action, "gave reward =", reward, " score =", info['score'], "and max score =", max_seen_score)  # DEBUG
+        # print("Step", step, "\t action =", action, "gave reward =", reward, " score =", info['score'], "and max score =", max_seen_score)  # DEBUG
+        print("Step {:>6}, action {}, gave reward {:>6}, score {:>6} and max score {:>7}.".format(step, action, reward, info['score'], max_seen_score))  # DEBUG
 
         if info['score'] > max_seen_score:
             max_seen_score = info['score']
-            print("New score record!!", max_seen_score)
+            print("!!New total score record!!", max_seen_score)
+            log_max_seen_score(step, max_seen_score)
         if done:
             last_obs = env.reset()
             if info['frame'] > 0:  # we actually played a few frames

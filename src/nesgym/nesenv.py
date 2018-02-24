@@ -180,23 +180,26 @@ class NESEnv(gym.Env, utils.EzPickle):
         self.level = 1
         self.delta_reward_by_level = 0
 
-        episode_time_length_secs = 60  # two minutes is the max time by episode!
-        frame_skip = 5
+        episode_time_length_secs = 180  # two minutes is the max time by episode!
+        # self.frame_skip = 1
+        # self.frame_skip = 10
+        self.frame_skip = 4
 
         # XXX 60 if human mode, about 120 if maximum speed
         # fps = 60
         fps = 120
-        self.episode_length = episode_time_length_secs * fps / frame_skip
+        self.episode_length = episode_time_length_secs * fps / self.frame_skip
 
         # All the possible actions.  Try to use the smallest
-        # possible number of actionsin the child class!
+        # possible number of actions in the child class!
         self.actions = [
-            'U', 'D', 'L', 'R',
-            'UR', 'DR', 'URA', 'DRB',
-            'UL', 'DL', 'ULA', 'DLB',
-            'A', 'B',
-            'RB', 'RA'
-            'LB', 'LA'
+            'U', 'D', 'L', 'R',  # up, down, left, right
+            'UR', 'DR', 'URA', 'DRB',  # up/down+right, up/down+right+a/B
+            'UL', 'DL', 'ULA', 'DLB',  # up/down+left, up/down+left+a/B
+            'A', 'B',    # a, b
+            'RB', 'RA'   # right+b, right+a
+            'LB', 'LA',  # left+b, left+a
+            'S', 'E'  # start, select
         ]
         self.action_space = spaces.Discrete(len(self.actions))
         self.frame = 0
@@ -214,13 +217,14 @@ class NESEnv(gym.Env, utils.EzPickle):
     def _step(self, action):
         self.frame += 1
         done = False
-        # how to force a restart ONCE ?
-        if self.frame > 0 and self.life <= 0:
-            done = True
-            self.frame = 0
-        if self.frame >= self.episode_length:
-            done = True
-            self.frame = 0
+        # how to force a restart ONCE and not do a few restart for nothing every once in a while?
+        if (self.frame % self.frame_skip) == 0:
+            # if self.frame > 0 and self.life <= 0:
+            #     done = True
+            #     self.frame = 0
+            if self.frame >= self.episode_length:
+                done = True
+                self.frame = 0
         obs = self.screen.copy()
         info = {
             "frame": self.frame,
@@ -235,13 +239,15 @@ class NESEnv(gym.Env, utils.EzPickle):
         return obs, self.reward, done, info
 
     def _reset(self):
+        print("Info: reseting the environment...")  # DEBUG
         if not self.emulator_started:
             self._start_emulator()
         self.reward = 0
         self.score = 0
         self.life = 2
         self.level = 1
-        self.screen = np.zeros((SCREEN_HEIGHT, SCREEN_WIDTH, 3), dtype=np.uint8)
+        self.screen.fill(0)
+        # self.screen = np.zeros((SCREEN_HEIGHT, SCREEN_WIDTH, 3), dtype=np.uint8)
         self._write_to_pipe('reset' + SEP)
         with self.command_cond:
             self.can_send_command = False
@@ -310,17 +316,19 @@ class NESEnv(gym.Env, utils.EzPickle):
                     pvs = np.array(palette_rgb[pvs-20], dtype=np.uint8)
                     self.screen = pvs.reshape((SCREEN_HEIGHT, SCREEN_WIDTH, 3))
                 elif msg_type == "data":
-                    # new format is %02x%02x%02x%02x", reward, score, life, level
+                    # XXX new format is %02x%06i%02x%02x", reward, score, life, level
+                    # print("body =", body)  # DEBUG
                     self.reward = int(body[2][:2], 16)
                     # print("(from Python) self.reward =", self.reward)  # DEBUG
-                    self.score = int(body[2][2:4], 16)
-                    # print("(from Python) score =", score)  # DEBUG
-                    life = int(body[2][4:6], 16)
+                    # print(body[2][3:9])  # DEBUG
+                    self.score = int(body[2][3:9])
+                    # print("(from Python) score =", self.score)  # DEBUG
+                    life = int(body[2][10:12], 16)
                     # print("(from Python) life =", life)  # DEBUG
                     if life < self.life:
                         self.reward += self.delta_reward_by_life * (life - self.life)
                         self.life = life
-                    level = int(body[2][6:8], 16)
+                    level = int(body[2][13:15], 16)
                     # print("(from Python) level =", level)  # DEBUG
                     if level > self.level:
                         self.reward += self.delta_reward_by_level * (level - self.level)

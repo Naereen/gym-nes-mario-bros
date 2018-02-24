@@ -12,8 +12,8 @@ from .nesenv import NESEnv
 
 package_directory = os.path.dirname(os.path.abspath(__file__))
 
-delta_reward_by_life = 200
-delta_reward_by_level = 1000
+delta_reward_by_life  = 500
+delta_reward_by_level = 5000
 
 class MarioBrosEnv(NESEnv):
     def __init__(self):
@@ -27,19 +27,20 @@ class MarioBrosEnv(NESEnv):
         # and actions
         self.actions = [
             'A',    # jump
-            'L',    # left
+            # 'L',    # left
             'LA',   # left+jump
-            'R',    # right
+            # 'R',    # right
             'RA',   # right+jump
-            # 'B',  # run
-            # 'BA', # run+jump
-            # 'BL', # run+left
-            # 'BR', # run+right
+            # 'B',    # run  XXX does nothing! Is it good to have an action that does nothing?
+            # 'BA',   # run+jump
+            'BL',   # run+left
+            'BR',   # run+right
+            # 'BLA',   # run+left+jump
+            # 'BRA',   # run+right+jump
+            'S',    # enter  XXX pause! Is it good to have an action that does nothing?
         ]
+        # # FIXME use this one to let the dqn do nothing but run
+        # self.actions = [
+        #     'B'
+        # ]
         self.action_space = spaces.Discrete(len(self.actions))
-
-
-    # ## ---------- gym.Env methods -------------
-    # def _step(self, action):
-    #     obs, self.reward, done, info = super()._step(action)
-    #     return obs, self.reward, done, info

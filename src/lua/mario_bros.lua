@@ -72,15 +72,19 @@ life = 2
 level = 1
 
 -- update screen every screen_update_interval frames
-frame_skip = 5
+frame_skip = 4
 
 while true do
   -- Debugging message
   gui.text( 1, 10, "By Naereen")
-  -- gui.text(60, 10, "R:")
-  -- gui.text(70, 10, reward)
-  -- gui.text(85, 10, "L:")
-  -- gui.text(95, 10, life)
+  gui.text(60, 10, "R:")
+  gui.text(70, 10, reward)
+  gui.text(85, 10, "L:")
+  gui.text(95, 10, life)
+  gui.text(125, 10, "S:")
+  gui.text(145, 10, score)
+  gui.text(170, 10, "#:")
+  gui.text(185, 10, level)
 
   if emu.framecount() % frame_skip == 0 then
     nes_ask_for_command()
@@ -100,7 +104,7 @@ while true do
         life = get_life()
         level = get_level()
       end
-      nes_send_data(string.format("%02x%02x%02x%02x", reward, score, life, level))
+      nes_send_data(string.format("%02x:%06i:%02x:%02x", (reward % 256), score, life, level))
       nes_update_screen()
     else
       print('pipe closed')
