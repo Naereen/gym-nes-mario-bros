@@ -3,8 +3,12 @@
 An EXPERIMENTAL [openai-gym](https://gym.openai.com/) wrapper for NES games.
 
 # Installation
-- Install the `fceux` NES emulator and make sure `fceux` is in your `$PATH`. In Debian/Ubuntu, simple use `sudo apt install fceux`.
-- Copy state files from `roms/fcs/*` to your `~/.fceux/fcs/` (faster loading for the beginning of the game).
+> You can use a [`virtualenv`](http://virtualenv.pypa.io/) or a [`pipenv`](https://docs.pipenv.org/) if you want to install the dependencies in an isolated environment.
+
+1. Install [openai-gym](https://github.com/openai/gym#installing-everything) with pip, and `python-opencv` (on Debian/Ubuntu, `sudo apt install python3-open`).
+2. Install the `fceux` NES emulator and make sure `fceux` is in your `$PATH`. In Debian/Ubuntu, simple use `sudo apt install fceux`.
+3. Find a `.nes` ROM for [Mario Bros.](http://datacrystal.romhacking.net/wiki/Mario_Bros.) game (any dump for the Nintendo NES will do).
+4. Copy state files from `roms/fcs/*` to your `~/.fceux/fcs/` (faster loading for the beginning of the game).
 
 # Example usage
 For instance:
@@ -27,10 +31,11 @@ You can train dqn model for Atari with [`run-atari.py`](src/run-atari.py) and fo
 
 # Integrating new NES games?
 You need to write two files:
-1. a lua interface file,
-2. and an openai gym environment class(python) file.
 
-The lua file needs to get the reward from emulator(typically extracting from a memory location), and the python file defines the game specific environment.
+1. a [lua interface](http://www.fceux.com/web/help/LuaScripting.html) file,
+2. and an [openai gym environment](https://gym.openai.com/envs/) class (python) file.
+
+The lua file needs to get the reward from emulator (typically extracting from a memory location), and the python file defines the game specific environment.
 
 For an example of lua file, see [`src/lua/soccer.lua`](src/lua/soccer.lua); for an example of gym env file, see [`src/nesgym/nekketsu_soccer_env.py`](src/nesgym/nekketsu_soccer_env.py).
 
