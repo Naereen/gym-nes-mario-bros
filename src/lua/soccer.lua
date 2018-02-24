@@ -2,7 +2,9 @@ require 'nes_interface'
 
 function get_score()
   local p1score = memory.readbyte(0x052e)
+  print("p1score", p1score)
   local p2score = memory.readbyte(0x052F)
+  print("p2score", p2score)
   return p1score
 end
 

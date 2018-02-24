@@ -113,7 +113,7 @@ function handle_command(line)
       local btn = buttons:sub(i,i)
       local button = COMMAND_TABLE[buttons:sub(i,i)]
       joypad_command[button] = true
-      gui.text(5,25, button)
+      gui.text(1, 25, button)
     end
     joypad.set(1, joypad_command)
   end
