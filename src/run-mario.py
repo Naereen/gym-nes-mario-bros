@@ -31,7 +31,7 @@ def mario_main():
 
     last_obs = env.reset()
 
-    max_timesteps = 4000000
+    max_timesteps = 400000
 
     exploration_schedule = PiecewiseSchedule(
         [
@@ -60,6 +60,7 @@ def mario_main():
     reward_sum_episode = 0
     num_episodes = 0
     episode_rewards = deque(maxlen=100)
+
     for step in range(max_timesteps):
         if step > 0 and step % 100 == 0:
             print("step: ", step,
@@ -70,8 +71,10 @@ def mario_main():
             )
             if len(episode_rewards) > 0:
                 print("last 100 episode mean rewards: ", np.mean(np.array(episode_rewards)))
+
         # XXX Enable this to see the Python view of the screen
         # env.render()
+
         action = dqn.choose_action(step, last_obs)
         obs, reward, done, info = env.step(action)
         reward_sum_episode += reward

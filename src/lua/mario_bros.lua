@@ -25,6 +25,15 @@
 
 require 'nes_interface'
 
+-- Read RAM game to get level, life, scores etc
+
+function get_level()
+  local byte_0 = memory.readbyteunsigned(0x0041)
+  local levelnumber = byte_0 % 16
+  return levelnumber
+end
+
+-- TODO change when tackling the 2-player mode!
 function get_life()
   local byte_1 = memory.readbyteunsigned(0x0048)
   local p1life = byte_1 % 4
@@ -32,7 +41,6 @@ function get_life()
   local p2life = byte_2 % 4
   -- gui.text(1, 10, "Life:")
   -- gui.text(31, 10, p1life)
-
   return p1life
 end
 
@@ -46,19 +54,12 @@ function get_score()
   -- WARNING There is probably a faster way to compute this!
   local p1score = 10000 * (10 * ((byte_1 - (byte_1 % 16)) / 16) + (byte_1 % 16)) + 100 * (10 * ((byte_2 - (byte_2 % 16)) / 16) + (byte_2 % 16)) + (10 * ((byte_3 - (byte_3 % 16)) / 16) + (byte_3 % 16))
 
-  -- local byte_0 = memory.readbyteunsigned(0x0048)
-  -- local p1life = byte_0 % 4
-  -- gui.text(1, 10, "Life:")
-  -- gui.text(31, 10, p1life)
-
   -- local byte_1 = memory.readbyteunsigned(0x0099)
   -- local byte_2 = memory.readbyteunsigned(0x009A)
   -- local byte_3 = memory.readbyteunsigned(0x009B)
   -- WARNING There is probably a faster way to compute this!
   -- local p2score = 10000 * (10 * ((byte_1 - (byte_1 % 16)) / 16) + (byte_1 % 16)) + 100 * (10 * ((byte_2 - (byte_2 % 16)) / 16) + (byte_2 % 16)) + (10 * ((byte_3 - (byte_3 % 16)) / 16) + (byte_3 % 16))
 
-  -- XXX Manual hack: count a loss of 1000 points when loosing a life
-  -- return (1000 * p1life) + p1score
   return p1score
 end
 
@@ -68,18 +69,18 @@ score = 0
 reward = 0
 new_score = 0
 life = 2
+level = 1
 
 -- update screen every screen_update_interval frames
-frame_skip = 10
+frame_skip = 4
 
 while true do
   -- Debugging message
-  -- gui.text( 1, 10, "Python/Lua DeepQNLearning - By Naereen")
   gui.text( 1, 10, "By Naereen")
-  gui.text(21, 10, "R:")
-  gui.text(36, 10, reward)
-  gui.text(41, 10, "L:")
-  gui.text(51, 10, life)
+  gui.text(60, 10, "R:")
+  gui.text(70, 10, reward)
+  gui.text(85, 10, "L:")
+  gui.text(95, 10, life)
 
   if emu.framecount() % frame_skip == 0 then
     nes_ask_for_command()
@@ -95,8 +96,9 @@ while true do
         reward = new_score - score
         score = new_score
         life = get_life()
+        level = get_level()
       end
-      nes_send_data(string.format("%02x%02x%02x", reward, score, life))
+      nes_send_data(string.format("%02x%02x%02x%02x", reward, score, life, level))
       nes_update_screen()
     else
       print('pipe closed')

@@ -12,13 +12,18 @@ from .nesenv import NESEnv
 
 package_directory = os.path.dirname(os.path.abspath(__file__))
 
+delta_reward_by_life = 200
+delta_reward_by_level = 1000
+
 class MarioBrosEnv(NESEnv):
     def __init__(self):
         super().__init__()
+        # Configuration for difference of rewards when you lose a life or win a level
+        self.delta_reward_by_life = delta_reward_by_life
+        self.delta_reward_by_level = delta_reward_by_level
         # Configure paths
         self.lua_interface_path = os.path.join(package_directory, '../lua/mario_bros.lua')
-        # self.rom_file_path = os.path.join(package_directory, '../roms/mario_bros.nes')
-        self.rom_file_path = os.path.join(package_directory, '../roms/mario_bros_ju.nes')
+        self.rom_file_path = os.path.join(package_directory, '../roms/mario_bros.nes')
         # and actions
         self.actions = [
             'A',    # jump
@@ -37,4 +42,7 @@ class MarioBrosEnv(NESEnv):
     ## ---------- gym.Env methods -------------
     def _step(self, action):
         obs, self.reward, done, info = super()._step(action)
-        return obs, self.reward, done or (self.life == 0), info
+        if self.life == 0:
+            done = True
+            self.frame = 0
+        return obs, self.reward, done, info

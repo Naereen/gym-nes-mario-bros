@@ -173,10 +173,16 @@ class NESEnv(gym.Env, utils.EzPickle):
         self.command_cond = Condition()
         self.viewer = None
         self.reward = 0
+        # Configuration for difference of rewards when you lose a life or win a level
         self.life = 2
-        episode_time_length_secs = 120  # two minutes is the max time!
+        self.delta_reward_by_life = 0
+        self.level = 2
+        self.delta_reward_by_level = 0
+
+        episode_time_length_secs = 120  # two minutes is the max time by episode!
         frame_skip = 4
-        fps = 60
+        # fps = 60
+        fps = 120
         self.episode_length = episode_time_length_secs * fps / frame_skip
 
         # All the possible actions.  Try to use the smallest
@@ -291,17 +297,21 @@ class NESEnv(gym.Env, utils.EzPickle):
                     pvs = np.array(palette_rgb[pvs-20], dtype=np.uint8)
                     self.screen = pvs.reshape((SCREEN_HEIGHT, SCREEN_WIDTH, 3))
                 elif msg_type == "data":
-                    # new format is %02x%02x%02x", reward, score, life
+                    # new format is %02x%02x%02x%02x", reward, score, life, level
                     self.reward = int(body[2][:2], 16)
                     # print("(from Python) self.reward =", self.reward)  # DEBUG
                     # score = int(body[2][2:4], 16)
                     # print("(from Python) score =", score)  # DEBUG
                     life = int(body[2][4:6], 16)
-                    # print("(from Python) self.life =", self.life)  # DEBUG
-                    # XXX Experimental
-                    if life < self.life:
+                    # print("(from Python) life =", life)  # DEBUG
+                    if life != self.life:
+                        self.reward += self.delta_reward_by_life * (life - self.life)
                         self.life = life
-                        self.reward -= 1000
+                    level = int(body[2][6:8], 16)
+                    # print("(from Python) level =", level)  # DEBUG
+                    if level != self.level:
+                        self.level = level
+                        self.reward += self.delta_reward_by_level
 
     def _open_pipes(self):
         # emulator to client
