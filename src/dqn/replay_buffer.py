@@ -17,7 +17,7 @@ class ReplayBuffer(object):
     def __init__(self, size, frame_history_len):
         """This is a memory efficient implementation of the replay buffer.
 
-        The sepecific memory optimizations use here are:
+        The specific memory optimizations use here are:
             - only store each frame once rather than k times
               even if every observation normally consists of k last frames
             - store frames as np.uint8 (actually it is most time-performance
@@ -25,7 +25,7 @@ class ReplayBuffer(object):
               time)
             - store frame_t and frame_(t+1) in the same buffer.
 
-        For the tipical use case in Atari Deep RL buffer with 1M frames the total
+        For the typical use case in Atari Deep RL buffer with 1M frames the total
         memory footprint of this buffer is 10^6 * 84 * 84 bytes ~= 7 gigabytes
 
         Warning! Assumes that returning frame of zeros at the beginning
@@ -55,15 +55,15 @@ class ReplayBuffer(object):
         """Returns true if `batch_size` different transitions can be sampled from the buffer."""
         return batch_size + 1 <= self.num_in_buffer
 
-    def _encode_sample(self, idxes):
+    def _encode_sample(self, indexes):
         obs_batch = np.concatenate(
-            [self._encode_observation(idx)[None] for idx in idxes], 0)
-        act_batch = self.action[idxes]
-        rew_batch = self.reward[idxes]
+            [self._encode_observation(idx)[None] for idx in indexes], 0)
+        act_batch = self.action[indexes]
+        rew_batch = self.reward[indexes]
         next_obs_batch = np.concatenate(
-            [self._encode_observation(idx + 1)[None] for idx in idxes], 0)
+            [self._encode_observation(idx + 1)[None] for idx in indexes], 0)
         done_mask = np.array(
-            [1.0 if self.done[idx] else 0.0 for idx in idxes], dtype=np.float32)
+            [1.0 if self.done[idx] else 0.0 for idx in indexes], dtype=np.float32)
 
         return obs_batch, act_batch, rew_batch, next_obs_batch, done_mask
 
@@ -101,9 +101,9 @@ class ReplayBuffer(object):
             Array of shape (batch_size,) and dtype np.float32
         """
         assert self.can_sample(batch_size)
-        idxes = sample_n_unique(lambda: np.random.randint(
+        indexes = sample_n_unique(lambda: np.random.randint(
             0, self.num_in_buffer - 2), batch_size)
-        return self._encode_sample(idxes)
+        return self._encode_sample(indexes)
 
     def encode_recent_observation(self):
         """Return the most recent `frame_history_len` frames.

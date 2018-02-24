@@ -37,7 +37,7 @@ class DoubleDQN(object):
                  image_shape,
                  num_actions,
                  frame_history_len=4,
-                 replay_buffer_size=1000000,
+                 replay_buffer_size=10000,
                  training_freq=4,
                  training_starts=5000,
                  training_batch_size=32,

@@ -41,6 +41,8 @@ def soccer_main():
                     # training_starts=1000,
                     # target_update_freq=500,
                     # training_batch_size=3,
+                    frame_history_len=4,
+                    replay_buffer_size=100000,  # XXX reduce if MemoryError
                     exploration=exploration_schedule
                    )
 
@@ -57,6 +59,7 @@ def soccer_main():
         obs, reward, done, info = env.step(action)
         reward_sum_episode += reward
         dqn.learn(step, action, reward, done, info)
+        print("Step", step, " using action =", action, "gave reward =", reward)  # DEBUG
         if done:
             last_obs = env.reset()
             episode_rewards.append(reward_sum_episode)

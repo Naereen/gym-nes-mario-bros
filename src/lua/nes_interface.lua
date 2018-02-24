@@ -35,6 +35,7 @@ end
 
 -- called once when emulator starts
 function nes_init()
+  -- FIXME reduce from "maximum" to "normal" if needed
   emu.speedmode("maximum")
   -- emu.speedmode("normal")
 
