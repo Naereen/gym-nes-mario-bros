@@ -48,9 +48,9 @@ def mario_main():
                     # target_update_freq=4000,
                     # training_batch_size=64,
                     # XXX light simulations?
-                    training_starts=1000,
-                    target_update_freq=500,
-                    training_batch_size=3,
+                    training_starts=5000,
+                    target_update_freq=100,
+                    training_batch_size=4,
                     # Other parameters
                     frame_history_len=4,
                     replay_buffer_size=100000,  # XXX reduce if MemoryError

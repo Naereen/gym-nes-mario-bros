@@ -176,7 +176,7 @@ class NESEnv(gym.Env, utils.EzPickle):
         # Configuration for difference of rewards when you lose a life or win a level
         self.life = 2
         self.delta_reward_by_life = 0
-        self.level = 2
+        self.level = 1
         self.delta_reward_by_level = 0
 
         episode_time_length_secs = 120  # two minutes is the max time by episode!
@@ -221,6 +221,7 @@ class NESEnv(gym.Env, utils.EzPickle):
                 self.command_cond.wait()
             self.can_send_command = False
         self._joypad(self.actions[action])
+        # XXX hack to not give a negative reward for successive steps?
         return obs, self.reward, done, info
 
     def _reset(self):
@@ -228,6 +229,7 @@ class NESEnv(gym.Env, utils.EzPickle):
             self._start_emulator()
         self.reward = 0
         self.life = 2
+        self.level = 1
         self.screen = np.zeros((SCREEN_HEIGHT, SCREEN_WIDTH, 3), dtype=np.uint8)
         self._write_to_pipe('reset' + SEP)
         with self.command_cond:
@@ -310,8 +312,8 @@ class NESEnv(gym.Env, utils.EzPickle):
                     level = int(body[2][6:8], 16)
                     # print("(from Python) level =", level)  # DEBUG
                     if level != self.level:
+                        self.reward += self.delta_reward_by_level * (level - self.level)
                         self.level = level
-                        self.reward += self.delta_reward_by_level
 
     def _open_pipes(self):
         # emulator to client

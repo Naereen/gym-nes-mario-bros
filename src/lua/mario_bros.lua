@@ -91,6 +91,8 @@ while true do
         nes_clear_reset_flag()
         score = 0
         reward = 0
+        life = 2
+        level = 1
       else
         new_score = get_score()
         reward = new_score - score
