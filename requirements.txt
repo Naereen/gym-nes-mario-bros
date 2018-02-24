@@ -1,0 +1,9 @@
+# requirements.txt
+# Install in a virtualenv or a pipenv
+# $ pip install -r requirements.txt
+#
+numpy
+gym
+gym[atari]
+keras
+cv2
