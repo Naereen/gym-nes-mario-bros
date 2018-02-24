@@ -53,10 +53,11 @@ def mario_main():
     num_episodes = 0
     episode_rewards = deque(maxlen=100)
     for step in range(max_timesteps):
-        if step > 0 and step % 50 == 0:
+        if step > 0 and step % 100 == 0:
             print('step: ', step, 'episodes:', num_episodes, 'epsilon:', exploration_schedule.value(step),
                   'learning rate:', dqn.get_learning_rate(), 'last 100 training loss mean', dqn.get_avg_loss(),
-                  'last 100 episode mean rewards: ', np.mean(np.array(episode_rewards, dtype=np.float32)))
+                  'last 100 episode mean rewards: ', np.mean(np.array(episode_rewards)))
+                #   'last 100 episode mean rewards: ', np.mean(np.array(episode_rewards, dtype=np.float32)))
         # XXX Enable this to see the Python view of the screen
         # env.render()
         action = dqn.choose_action(step, last_obs)

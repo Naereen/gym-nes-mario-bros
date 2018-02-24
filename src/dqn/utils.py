@@ -8,6 +8,9 @@ def linear_interpolation(l, r, alpha):
 class PiecewiseSchedule(object):
     def __init__(self, endpoints, interpolation=linear_interpolation, outside_value=None):
         """Piecewise schedule.
+
+        Parameters
+        ----------
         endpoints: [(int, int)]
             list of pairs `(time, value)` meaning that schedule should output
             `value` when `t==time`. All the values for time must be sorted in
@@ -47,6 +50,7 @@ class LinearSchedule(object):
         """Linear interpolation between initial_p and final_p over
         schedule_timesteps. After this many timesteps pass final_p is
         returned.
+
         Parameters
         ----------
         schedule_timesteps: int

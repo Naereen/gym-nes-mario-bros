@@ -1,4 +1,4 @@
 run:
 	-pkill fceux
-	python3 run-mario.py
+	-python3 run-mario.py
 	-pkill fceux

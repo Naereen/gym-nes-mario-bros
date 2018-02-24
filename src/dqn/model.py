@@ -47,7 +47,9 @@ class DoubleDQN(object):
                  log_dir="logs/"):
         """
             Double Deep Q Network
-            params:
+
+            Parameters
+            ----------
             image_shape: (height, width, n_values)
             num_actions: how many different actions we can choose
             frame_history_len: feed this number of frame data as input to the deep-q Network
