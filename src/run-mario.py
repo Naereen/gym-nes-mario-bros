@@ -32,6 +32,7 @@ def mario_main():
     last_obs = env.reset()
 
     max_timesteps = 400000
+    max_seen_score = 0
 
     exploration_schedule = PiecewiseSchedule(
         [
@@ -78,15 +79,21 @@ def mario_main():
         action = dqn.choose_action(step, last_obs)
         obs, reward, done, info = env.step(action)
         reward_sum_episode += reward
+        if done and reward < 0:
+            reward = 0  # force this manually!
         dqn.learn(step, action, reward, done, info)
-        print("Step", step, " using action =", action, "gave reward =", reward)  # DEBUG
+        print("Step", step, "\t action =", action, "gave reward =", reward, " score =", info['score'], "and max score =", max_seen_score)  # DEBUG
 
+        if info['score'] > max_seen_score:
+            max_seen_score = info['score']
+            print("New score record!!", max_seen_score)
         if done:
-            print("\ndone, reward_sum_episode =", reward_sum_episode)
             last_obs = env.reset()
-            episode_rewards.append(reward_sum_episode)
-            reward_sum_episode = 0
-            num_episodes += 1
+            if info['frame'] > 0:  # we actually played a few frames
+                print("\ndone, reward_sum_episode =", reward_sum_episode)
+                episode_rewards.append(reward_sum_episode)
+                reward_sum_episode = 0
+                num_episodes += 1
         else:
             last_obs = obs
 

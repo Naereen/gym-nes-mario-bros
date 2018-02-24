@@ -72,15 +72,15 @@ life = 2
 level = 1
 
 -- update screen every screen_update_interval frames
-frame_skip = 4
+frame_skip = 5
 
 while true do
   -- Debugging message
   gui.text( 1, 10, "By Naereen")
-  gui.text(60, 10, "R:")
-  gui.text(70, 10, reward)
-  gui.text(85, 10, "L:")
-  gui.text(95, 10, life)
+  -- gui.text(60, 10, "R:")
+  -- gui.text(70, 10, reward)
+  -- gui.text(85, 10, "L:")
+  -- gui.text(95, 10, life)
 
   if emu.framecount() % frame_skip == 0 then
     nes_ask_for_command()

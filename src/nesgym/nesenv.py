@@ -173,6 +173,7 @@ class NESEnv(gym.Env, utils.EzPickle):
         self.command_cond = Condition()
         self.viewer = None
         self.reward = 0
+        self.score = 0
         # Configuration for difference of rewards when you lose a life or win a level
         self.life = 2
         self.delta_reward_by_life = 0
@@ -180,7 +181,9 @@ class NESEnv(gym.Env, utils.EzPickle):
         self.delta_reward_by_level = 0
 
         episode_time_length_secs = 60  # two minutes is the max time by episode!
-        frame_skip = 4
+        frame_skip = 5
+
+        # XXX 60 if human mode, about 120 if maximum speed
         # fps = 60
         fps = 120
         self.episode_length = episode_time_length_secs * fps / frame_skip
@@ -219,7 +222,10 @@ class NESEnv(gym.Env, utils.EzPickle):
             done = True
             self.frame = 0
         obs = self.screen.copy()
-        info = {"frame": self.frame}
+        info = {
+            "frame": self.frame,
+            "score": self.score,
+        }
         with self.command_cond:
             while not self.can_send_command:
                 self.command_cond.wait()
@@ -232,6 +238,7 @@ class NESEnv(gym.Env, utils.EzPickle):
         if not self.emulator_started:
             self._start_emulator()
         self.reward = 0
+        self.score = 0
         self.life = 2
         self.level = 1
         self.screen = np.zeros((SCREEN_HEIGHT, SCREEN_WIDTH, 3), dtype=np.uint8)
@@ -306,7 +313,7 @@ class NESEnv(gym.Env, utils.EzPickle):
                     # new format is %02x%02x%02x%02x", reward, score, life, level
                     self.reward = int(body[2][:2], 16)
                     # print("(from Python) self.reward =", self.reward)  # DEBUG
-                    # score = int(body[2][2:4], 16)
+                    self.score = int(body[2][2:4], 16)
                     # print("(from Python) score =", score)  # DEBUG
                     life = int(body[2][4:6], 16)
                     # print("(from Python) life =", life)  # DEBUG
