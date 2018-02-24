@@ -54,19 +54,21 @@ def mario_main():
             print('step: ', step, 'episodes:', num_episodes, 'epsilon:', exploration_schedule.value(step),
                   'learning rate:', dqn.get_learning_rate(), 'last 100 training loss mean', dqn.get_avg_loss(),
                   'last 100 episode mean rewards: ', np.mean(np.array(episode_rewards, dtype=np.float32)))
+        # XXX Enable this to see the Python view of the screen
         # env.render()
         action = dqn.choose_action(step, last_obs)
         obs, reward, done, info = env.step(action)
         reward_sum_episode += reward
         dqn.learn(step, action, reward, done, info)
         print("Step", step, " using action =", action, "gave reward =", reward)  # DEBUG
-        if done:
-            last_obs = env.reset()
-            episode_rewards.append(reward_sum_episode)
-            reward_sum_episode = 0
-            num_episodes += 1
-        else:
-            last_obs = obs
+        # if done:
+        #     last_obs = env.reset()
+        #     episode_rewards.append(reward_sum_episode)
+        #     reward_sum_episode = 0
+        #     num_episodes += 1
+        # else:
+        #     last_obs = obs
+        last_obs = obs
 
 if __name__ == "__main__":
     mario_main()

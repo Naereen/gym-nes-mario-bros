@@ -24,48 +24,55 @@ require 'nes_interface'
 -- 0x0095-0x0097 	Player 1 Score
 -- 0x0099-0x009B 	Player 2 Score
 function get_score()
-  local d3 = memory.readbyteunsigned(0x0095)
-  local d2 = memory.readbyteunsigned(0x0096)
-  local d1 = memory.readbyteunsigned(0x0097)
-  local p1score = 10000 * (10 * ((d3 - (d3 % 16)) / 16) + (d3 % 16)) + 100 * (10 * ((d2 - (d2 % 16)) / 16) + (d2 % 16)) + (10 * ((d1 - (d1 % 16)) / 16) + (d1 % 16))
+  local byte_1 = memory.readbyteunsigned(0x0095)
+  local byte_2 = memory.readbyteunsigned(0x0096)
+  local byte_3 = memory.readbyteunsigned(0x0097)
+  -- WARNING There is probably a faster way to compute this!
+  local p1score = 10000 * (10 * ((byte_1 - (byte_1 % 16)) / 16) + (byte_1 % 16)) + 100 * (10 * ((byte_2 - (byte_2 % 16)) / 16) + (byte_2 % 16)) + (10 * ((byte_3 - (byte_3 % 16)) / 16) + (byte_3 % 16))
 
-  -- local d3 = memory.readbyteunsigned(0x0099)
-  -- local d2 = memory.readbyteunsigned(0x009A)
-  -- local d1 = memory.readbyteunsigned(0x009B)
-  -- local p2score = 10000 * (10 * ((d3 - (d3 % 16)) / 16) + (d3 % 16)) + 100 * (10 * ((d2 - (d2 % 16)) / 16) + (d2 % 16)) + (10 * ((d1 - (d1 % 16)) / 16) + (d1 % 16))
+  -- local byte_0 = memory.readbyteunsigned(0x0048)
+  -- local p1life = byte_0 % 4
+  -- gui.text(1, 10, "Life:")
+  -- gui.text(31, 10, p1life)
 
+  -- local byte_1 = memory.readbyteunsigned(0x0099)
+  -- local byte_2 = memory.readbyteunsigned(0x009A)
+  -- local byte_3 = memory.readbyteunsigned(0x009B)
+  -- local p2score = 10000 * (10 * ((byte_1 - (byte_1 % 16)) / 16) + (byte_1 % 16)) + 100 * (10 * ((byte_2 - (byte_2 % 16)) / 16) + (byte_2 % 16)) + (10 * ((byte_3 - (byte_3 % 16)) / 16) + (byte_3 % 16))
+
+  -- XXX Manual hack: count a loss of 1000 points when loosing a life
+  -- return (1000 * p1life) + p1score
   return p1score
 end
 
 nes_init()
 
-local score = 0
+score = 0
+reward = 0
+new_score = 0
 
 -- update screen every screen_update_interval frames
-local frame_skip = 4
-local frame_skip_debug = 40
+frame_skip = 4
 
 while true do
   -- Debugging message
-  gui.text(1, 10, "Python/Lua DeepQNLearning - By Naereen")
+  -- gui.text(1, 10, "Python/Lua DeepQNLearning - By Naereen")
+  gui.text(1, 45, "Reward:")
+  gui.text(31, 45, reward)
 
   if emu.framecount() % frame_skip == 0 then
     nes_ask_for_command()
-    local has_command = nes_process_command()
+    has_command = nes_process_command()
     if has_command then
       emu.frameadvance()
-      local reward = 0
       if nes_get_reset_flag() then
         nes_clear_reset_flag()
         score = 0
         reward = 0
       else
-        -- local new_score = 0  -- DEBUG
-        local new_score = get_score()
+        new_score = get_score()
         reward = new_score - score
         score = new_score
-        -- gui.text(1, 45, "Reward:")
-        -- gui.text(31, 45, reward)
       end
       nes_send_data(string.format("%02x%02x", reward, score))
       nes_update_screen()
