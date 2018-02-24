@@ -1,3 +1,11 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+# By Lilian Besson (Naereen)
+# https://github.com/Naereen/gym-nes-mario-bros
+# MIT License https://lbesson.mit-license.org/
+#
+from __future__ import division, print_function  # Python 2 compatibility
+
 import os
 from collections import deque
 
@@ -47,17 +55,21 @@ def mario_main():
                     frame_history_len=4,
                     replay_buffer_size=100000,  # XXX reduce if MemoryError
                     exploration=exploration_schedule
-                   )
+                )
 
     reward_sum_episode = 0
     num_episodes = 0
     episode_rewards = deque(maxlen=100)
     for step in range(max_timesteps):
         if step > 0 and step % 100 == 0:
-            print('step: ', step, 'episodes:', num_episodes, 'epsilon:', exploration_schedule.value(step),
-                  'learning rate:', dqn.get_learning_rate(), 'last 100 training loss mean', dqn.get_avg_loss(),
-                  'last 100 episode mean rewards: ', np.mean(np.array(episode_rewards)))
-                #   'last 100 episode mean rewards: ', np.mean(np.array(episode_rewards, dtype=np.float32)))
+            print("step: ", step,
+                  "; episodes:", num_episodes,
+                  "; epsilon:", exploration_schedule.value(step),
+                  "; learning rate:", dqn.get_learning_rate(),
+                  "; last 100 training loss mean", dqn.get_avg_loss()
+            )
+            if len(episode_rewards) > 0:
+                print("last 100 episode mean rewards: ", np.mean(np.array(episode_rewards)))
         # XXX Enable this to see the Python view of the screen
         # env.render()
         action = dqn.choose_action(step, last_obs)
@@ -65,13 +77,16 @@ def mario_main():
         reward_sum_episode += reward
         dqn.learn(step, action, reward, done, info)
         print("Step", step, " using action =", action, "gave reward =", reward)  # DEBUG
-        # if done:
-        #     last_obs = env.reset()
-        #     episode_rewards.append(reward_sum_episode)
-        #     reward_sum_episode = 0
-        #     num_episodes += 1
-        # else:
-        #     last_obs = obs
+
+        if done:
+            print("done, reward_sum_episode =", reward_sum_episode)
+            last_obs = env.reset()
+            episode_rewards.append(reward_sum_episode)
+            reward_sum_episode = 0
+            num_episodes += 1
+        else:
+            last_obs = obs
+
         last_obs = obs
 
 if __name__ == "__main__":

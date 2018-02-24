@@ -1,10 +1,12 @@
 run:	run_mario
 run_mario:
-	-pkill fceux
+	-pkill -9 fceux
+	clear
 	-python3 run-mario.py
-	-pkill fceux
+	-pkill -9 fceux
 
 run_soccer:
-	-pkill fceux
+	-pkill -9 fceux
+	clear
 	-python3 run-soccer.py
-	-pkill fceux
+	-pkill -9 fceux

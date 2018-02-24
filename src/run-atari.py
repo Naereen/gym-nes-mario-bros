@@ -1,3 +1,11 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+# By Lilian Besson (Naereen)
+# https://github.com/Naereen/gym-nes-mario-bros
+# MIT License https://lbesson.mit-license.org/
+#
+from __future__ import division, print_function  # Python 2 compatibility
+
 import gym
 import numpy as np
 

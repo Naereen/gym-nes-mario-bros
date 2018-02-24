@@ -1,3 +1,8 @@
+-- #!/usr/bin/env lua
+-- By Lilian Besson (Naereen)
+-- https://github.com/Naereen/gym-nes-mario-bros
+-- MIT License https://lbesson.mit-license.org/
+
 -- global variables
 screen = {} -- screen pixels [x,y] = p
 pipe_out = nil -- for sending data(output e.g. screen pixels, reward) back to client

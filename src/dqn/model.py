@@ -1,3 +1,11 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+# By Lilian Besson (Naereen)
+# https://github.com/Naereen/gym-nes-mario-bros
+# MIT License https://lbesson.mit-license.org/
+#
+from __future__ import division, print_function  # Python 2 compatibility
+
 import keras
 from keras.layers.convolutional import Conv2D
 from keras.layers.core import Flatten
@@ -108,16 +116,11 @@ class DoubleDQN(object):
 
     def get_learning_rate(self):
         optimizer = self.base_model.optimizer
-        print("optimizer =", optimizer)  # DEBUG
-        print("optimizer.lr =", optimizer.lr)  # DEBUG
-        print("optimizer.decay =", optimizer.decay)  # DEBUG
-        print("optimizer.iterations =", optimizer.iterations)  # DEBUG
-        lr = K.eval(optimizer.lr * (1. / (1. + optimizer.decay * optimizer.iterations)))
+        lr = K.eval(optimizer.lr * (1. / (1. + optimizer.decay * K.cast(optimizer.iterations, K.tf.float32))))
         return lr
 
     def get_avg_loss(self):
         if len(self.latest_losses) > 0:
-            # return np.mean(np.array(self.latest_losses, dtype=np.float32))
             return np.mean(np.array(self.latest_losses))
         else:
             return None
@@ -127,19 +130,17 @@ class DoubleDQN(object):
         q = self.base_model.predict(obs_t)
         q_t1 = self.target_model.predict(obs_t1)
         q_t1_max = np.max(q_t1, axis=1)
-        print('q:\n', q)  # DEBUG
-        print('q_t1:\n', q_t1)  # DEBUG
-        print('q_t1_max:\n', q_t1_max)  # DEBUG
-        print('action:\n', action)  # DEBUG
+        # print("q:\n", q)  # DEBUG
+        # print("q_t1:\n", q_t1)  # DEBUG
+        # print("q_t1_max:\n", q_t1_max)  # DEBUG
+        # print("action:\n", action)  # DEBUG
 
-        # for idx in range(len(q)):
-        #     q[idx][action[idx]] = reward[idx] + q_t1_max[idx] * self.reward_decay * (1-done_mask[idx])
         q[range(len(action)), action] = reward + q_t1_max * self.reward_decay * (1-done_mask)
 
-        print('reward:\n', reward)  # DEBUG
-        print('qt1_max:\n', q_t1_max)  # DEBUG
-        print('done mask:\n', done_mask)  # DEBUG
-        print("q': \n", q)  # DEBUG
+        # print("reward:\n", reward)  # DEBUG
+        # print("qt1_max:\n", q_t1_max)  # DEBUG
+        # print("done mask:\n", done_mask)  # DEBUG
+        # print("q": \n", q)  # DEBUG
 
         # self.base_model.fit(obs_t, q, batch_size=self.training_batch_size, epochs=1, callbacks=self.tensorboard_callback)
         loss = self.base_model.train_on_batch(obs_t, q)
@@ -147,5 +148,5 @@ class DoubleDQN(object):
 
     def _update_target(self):
         weights = self.base_model.get_weights()
-        print('update target', weights)  # DEBUG
+        # print("update target", weights)  # DEBUG
         self.target_model.set_weights(weights)

@@ -1,3 +1,11 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+# By Lilian Besson (Naereen)
+# https://github.com/Naereen/gym-nes-mario-bros
+# MIT License https://lbesson.mit-license.org/
+#
+from __future__ import division, print_function  # Python 2 compatibility
+
 import os
 from gym import spaces
 from .nesenv import NESEnv
@@ -24,3 +32,9 @@ class MarioBrosEnv(NESEnv):
             # 'BR', # run+right
         ]
         self.action_space = spaces.Discrete(len(self.actions))
+
+
+    ## ---------- gym.Env methods -------------
+    def _step(self, action):
+        obs, self.reward, done, info = super()._step(action)
+        return obs, self.reward, done or (self.life == 0), info

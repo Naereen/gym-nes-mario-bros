@@ -1,3 +1,11 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+# By Lilian Besson (Naereen)
+# https://github.com/Naereen/gym-nes-mario-bros
+# MIT License https://lbesson.mit-license.org/
+#
+from __future__ import division, print_function  # Python 2 compatibility
+
 import os
 import subprocess
 import sys
@@ -165,7 +173,8 @@ class NESEnv(gym.Env, utils.EzPickle):
         self.command_cond = Condition()
         self.viewer = None
         self.reward = 0
-        episode_time_length_secs = 3600  # one hour is the max time!
+        self.life = 2
+        episode_time_length_secs = 120  # two minutes is the max time!
         frame_skip = 4
         fps = 60
         self.episode_length = episode_time_length_secs * fps / frame_skip
@@ -212,6 +221,7 @@ class NESEnv(gym.Env, utils.EzPickle):
         if not self.emulator_started:
             self._start_emulator()
         self.reward = 0
+        self.life = 2
         self.screen = np.zeros((SCREEN_HEIGHT, SCREEN_WIDTH, 3), dtype=np.uint8)
         self._write_to_pipe('reset' + SEP)
         with self.command_cond:
@@ -266,7 +276,6 @@ class NESEnv(gym.Env, utils.EzPickle):
         with open(self.pipe_in_name, 'rb') as pipe:
             while not self.closed:
                 msg = pipe.readline()
-                #print('message: ', msg[:100])
                 body = msg.split(b'\xFF')
                 msg_type, frame = body[0], body[1]
                 msg_type = msg_type.decode('ascii')
@@ -282,7 +291,17 @@ class NESEnv(gym.Env, utils.EzPickle):
                     pvs = np.array(palette_rgb[pvs-20], dtype=np.uint8)
                     self.screen = pvs.reshape((SCREEN_HEIGHT, SCREEN_WIDTH, 3))
                 elif msg_type == "data":
+                    # new format is %02x%02x%02x", reward, score, life
                     self.reward = int(body[2][:2], 16)
+                    # print("(from Python) self.reward =", self.reward)  # DEBUG
+                    # score = int(body[2][2:4], 16)
+                    # print("(from Python) score =", score)  # DEBUG
+                    life = int(body[2][4:6], 16)
+                    # print("(from Python) self.life =", self.life)  # DEBUG
+                    # XXX Experimental
+                    if life < self.life:
+                        self.life = life
+                        self.reward -= 1000
 
     def _open_pipes(self):
         # emulator to client

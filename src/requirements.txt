@@ -7,3 +7,4 @@ gym
 gym[atari]
 keras
 cv2
+PIL

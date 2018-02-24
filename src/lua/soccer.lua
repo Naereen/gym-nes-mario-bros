@@ -1,3 +1,8 @@
+-- #!/usr/bin/env lua
+-- By Lilian Besson (Naereen)
+-- https://github.com/Naereen/gym-nes-mario-bros
+-- MIT License https://lbesson.mit-license.org/
+
 require 'nes_interface'
 
 function get_score()

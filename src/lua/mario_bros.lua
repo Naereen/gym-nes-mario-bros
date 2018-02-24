@@ -1,6 +1,11 @@
+-- #!/usr/bin/env lua
+-- By Lilian Besson (Naereen)
+-- https://github.com/Naereen/gym-nes-mario-bros
+-- MIT License https://lbesson.mit-license.org/
+
 -- Lua script to load the score for "Mario Bros." game with Fceux
 -- Reference for the ROM adress is http://datacrystal.romhacking.net/wiki/Mario_Bros.:RAM_map
---
+
 -- 0x0029 	Current Game Mode (0=1P A, 1=1P B, 2=2P A, 3=2P B)
 -- 0x003A 	Game A (0)/B (1) flag
 -- 0x0041 	Current displayed level number
@@ -20,6 +25,17 @@
 
 require 'nes_interface'
 
+function get_life()
+  local byte_1 = memory.readbyteunsigned(0x0048)
+  local p1life = byte_1 % 4
+  local byte_2 = memory.readbyteunsigned(0x004C)
+  local p2life = byte_2 % 4
+  -- gui.text(1, 10, "Life:")
+  -- gui.text(31, 10, p1life)
+
+  return p1life
+end
+
 -- TODO change when tackling the 2-player mode!
 -- 0x0095-0x0097 	Player 1 Score
 -- 0x0099-0x009B 	Player 2 Score
@@ -38,6 +54,7 @@ function get_score()
   -- local byte_1 = memory.readbyteunsigned(0x0099)
   -- local byte_2 = memory.readbyteunsigned(0x009A)
   -- local byte_3 = memory.readbyteunsigned(0x009B)
+  -- WARNING There is probably a faster way to compute this!
   -- local p2score = 10000 * (10 * ((byte_1 - (byte_1 % 16)) / 16) + (byte_1 % 16)) + 100 * (10 * ((byte_2 - (byte_2 % 16)) / 16) + (byte_2 % 16)) + (10 * ((byte_3 - (byte_3 % 16)) / 16) + (byte_3 % 16))
 
   -- XXX Manual hack: count a loss of 1000 points when loosing a life
@@ -50,15 +67,19 @@ nes_init()
 score = 0
 reward = 0
 new_score = 0
+life = 2
 
 -- update screen every screen_update_interval frames
-frame_skip = 4
+frame_skip = 10
 
 while true do
   -- Debugging message
-  -- gui.text(1, 10, "Python/Lua DeepQNLearning - By Naereen")
-  gui.text(1, 45, "Reward:")
-  gui.text(31, 45, reward)
+  -- gui.text( 1, 10, "Python/Lua DeepQNLearning - By Naereen")
+  gui.text( 1, 10, "By Naereen")
+  gui.text(21, 10, "R:")
+  gui.text(36, 10, reward)
+  gui.text(41, 10, "L:")
+  gui.text(51, 10, life)
 
   if emu.framecount() % frame_skip == 0 then
     nes_ask_for_command()
@@ -73,8 +94,9 @@ while true do
         new_score = get_score()
         reward = new_score - score
         score = new_score
+        life = get_life()
       end
-      nes_send_data(string.format("%02x%02x", reward, score))
+      nes_send_data(string.format("%02x%02x%02x", reward, score, life))
       nes_update_screen()
     else
       print('pipe closed')
