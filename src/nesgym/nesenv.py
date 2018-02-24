@@ -179,7 +179,7 @@ class NESEnv(gym.Env, utils.EzPickle):
         self.level = 1
         self.delta_reward_by_level = 0
 
-        episode_time_length_secs = 120  # two minutes is the max time by episode!
+        episode_time_length_secs = 60  # two minutes is the max time by episode!
         frame_skip = 4
         # fps = 60
         fps = 120
@@ -211,6 +211,10 @@ class NESEnv(gym.Env, utils.EzPickle):
     def _step(self, action):
         self.frame += 1
         done = False
+        # how to force a restart ONCE ?
+        if self.frame > 0 and self.life <= 0:
+            done = True
+            self.frame = 0
         if self.frame >= self.episode_length:
             done = True
             self.frame = 0
@@ -306,12 +310,12 @@ class NESEnv(gym.Env, utils.EzPickle):
                     # print("(from Python) score =", score)  # DEBUG
                     life = int(body[2][4:6], 16)
                     # print("(from Python) life =", life)  # DEBUG
-                    if life != self.life:
+                    if life < self.life:
                         self.reward += self.delta_reward_by_life * (life - self.life)
                         self.life = life
                     level = int(body[2][6:8], 16)
                     # print("(from Python) level =", level)  # DEBUG
-                    if level != self.level:
+                    if level > self.level:
                         self.reward += self.delta_reward_by_level * (level - self.level)
                         self.level = level
 

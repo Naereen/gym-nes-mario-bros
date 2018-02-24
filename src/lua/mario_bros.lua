@@ -37,10 +37,10 @@ end
 function get_life()
   local byte_1 = memory.readbyteunsigned(0x0048)
   local p1life = byte_1 % 4
-  local byte_2 = memory.readbyteunsigned(0x004C)
-  local p2life = byte_2 % 4
   -- gui.text(1, 10, "Life:")
   -- gui.text(31, 10, p1life)
+  -- local byte_2 = memory.readbyteunsigned(0x004C)
+  -- local p2life = byte_2 % 4
   return p1life
 end
 

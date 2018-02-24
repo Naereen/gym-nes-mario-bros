@@ -82,7 +82,7 @@ def mario_main():
         print("Step", step, " using action =", action, "gave reward =", reward)  # DEBUG
 
         if done:
-            print("done, reward_sum_episode =", reward_sum_episode)
+            print("\ndone, reward_sum_episode =", reward_sum_episode)
             last_obs = env.reset()
             episode_rewards.append(reward_sum_episode)
             reward_sum_episode = 0

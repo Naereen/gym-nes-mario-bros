@@ -39,10 +39,7 @@ class MarioBrosEnv(NESEnv):
         self.action_space = spaces.Discrete(len(self.actions))
 
 
-    ## ---------- gym.Env methods -------------
-    def _step(self, action):
-        obs, self.reward, done, info = super()._step(action)
-        if self.life == 0:
-            done = True
-            self.frame = 0
-        return obs, self.reward, done, info
+    # ## ---------- gym.Env methods -------------
+    # def _step(self, action):
+    #     obs, self.reward, done, info = super()._step(action)
+    #     return obs, self.reward, done, info
