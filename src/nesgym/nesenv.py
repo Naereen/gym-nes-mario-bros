@@ -218,17 +218,19 @@ class NESEnv(gym.Env, utils.EzPickle):
         self.frame += 1
         done = False
         # how to force a restart ONCE and not do a few restart for nothing every once in a while?
-        if (self.frame % self.frame_skip) == 0:
-            # if self.frame > 0 and self.life <= 0:
-            #     done = True
-            #     self.frame = 0
-            if self.frame >= self.episode_length:
-                done = True
-                self.frame = 0
+        # if (self.frame % self.frame_skip) == 0:
+        #     if self.frame > 0 and self.life <= 0:
+        #         done = True
+        #         self.frame = 0
+        if self.frame >= self.episode_length:
+            done = True
+            self.frame = 0
         obs = self.screen.copy()
         info = {
             "frame": self.frame,
             "score": self.score,
+            "level": self.level,
+            "life": self.life,
         }
         with self.command_cond:
             while not self.can_send_command:
@@ -316,6 +318,7 @@ class NESEnv(gym.Env, utils.EzPickle):
                     pvs = np.array(palette_rgb[pvs-20], dtype=np.uint8)
                     self.screen = pvs.reshape((SCREEN_HEIGHT, SCREEN_WIDTH, 3))
                 elif msg_type == "data":
+                    # print("(from Python) received data =", body[2])  # DEBUG
                     # XXX new format is %02x%06i%02x%02x", reward, score, life, level
                     # print("body =", body)  # DEBUG
                     self.reward = int(body[2][:2], 16)
@@ -325,13 +328,15 @@ class NESEnv(gym.Env, utils.EzPickle):
                     # print("(from Python) score =", self.score)  # DEBUG
                     life = int(body[2][10:12], 16)
                     # print("(from Python) life =", life)  # DEBUG
-                    if life < self.life:
-                        self.reward += self.delta_reward_by_life * (life - self.life)
+                    if life != self.life:
+                        if life < self.life:  # cannot win life except cheating
+                            self.reward += self.delta_reward_by_life * (life - self.life)
                         self.life = life
                     level = int(body[2][13:15], 16)
                     # print("(from Python) level =", level)  # DEBUG
-                    if level > self.level:
-                        self.reward += self.delta_reward_by_level * (level - self.level)
+                    if level != self.level:
+                        if level > self.level:  # cannot lose level
+                            self.reward += self.delta_reward_by_level * (level - self.level)
                         self.level = level
 
     def _open_pipes(self):

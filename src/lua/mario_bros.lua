@@ -36,13 +36,20 @@ end
 -- TODO change when tackling the 2-player mode!
 function get_life()
   local byte_1 = memory.readbyteunsigned(0x0048)
-  local p1life = byte_1 % 4
+  local p1life = byte_1 % 256
   -- gui.text(1, 10, "Life:")
   -- gui.text(31, 10, p1life)
   -- local byte_2 = memory.readbyteunsigned(0x004C)
-  -- local p2life = byte_2 % 4
+  -- local p2life = byte_2 % 256
   return p1life
 end
+
+-- TODO change when tackling the 2-player mode!
+function set_life(newlife)
+  memory.writebyte(0x0048, newlife)
+  -- memory.writebyte(0x004C, newlife)
+end
+
 
 -- TODO change when tackling the 2-player mode!
 -- 0x0095-0x0097 	Player 1 Score
@@ -68,8 +75,20 @@ nes_init()
 score = 0
 reward = 0
 new_score = 0
-life = 2
-level = 1
+-- Default values
+default_life = 2
+-- default_life = 99  -- Cheating!
+default_level = 1
+-- Actual values
+life = default_life
+level = default_level
+
+-- XXX Experimental!
+if default_life > 2 then
+  print("Magic: bonus life to 2!")
+  set_life(default_life)
+end
+
 
 -- update screen every screen_update_interval frames
 frame_skip = 4
@@ -88,15 +107,14 @@ while true do
 
   if emu.framecount() % frame_skip == 0 then
     nes_ask_for_command()
-    has_command = nes_process_command()
-    if has_command then
+    if nes_process_command() then
       emu.frameadvance()
       if nes_get_reset_flag() then
         nes_clear_reset_flag()
         score = 0
         reward = 0
-        life = 2
-        level = 1
+        life = default_life
+        level = default_level
       else
         new_score = get_score()
         reward = new_score - score
@@ -106,6 +124,12 @@ while true do
       end
       nes_send_data(string.format("%02x:%06i:%02x:%02x", (reward % 256), score, life, level))
       nes_update_screen()
+      -- XXX Experimental infinite life, avoid restarting the game!
+      if life < 1 then
+        print("Magic: bonus life to 2!")
+        set_life(default_life)
+        life = default_life
+      end
     else
       print('pipe closed')
       break

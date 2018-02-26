@@ -85,6 +85,7 @@ function nes_update_screen()
 end
 
 function nes_send_data(data)
+  -- print("Sending this data:", data, "...")  -- DEBUG
   write_to_pipe("data" .. SEP .. emu.framecount() .. SEP .. data)
 end
 

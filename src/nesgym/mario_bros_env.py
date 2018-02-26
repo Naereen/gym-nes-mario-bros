@@ -25,6 +25,7 @@ class MarioBrosEnv(NESEnv):
         self.lua_interface_path = os.path.join(package_directory, '../lua/mario_bros.lua')
         self.rom_file_path = os.path.join(package_directory, '../roms/mario_bros.nes')
         # and actions
+        # TODO find the best (smallest) set of action
         self.actions = [
             'A',    # jump
             # 'L',    # left
@@ -37,7 +38,7 @@ class MarioBrosEnv(NESEnv):
             'BR',   # run+right
             # 'BLA',   # run+left+jump
             # 'BRA',   # run+right+jump
-            'S',    # enter  XXX pause! Is it good to have an action that does nothing?
+            # 'S',    # enter  XXX pause! Is it good to have an action that does nothing?
         ]
         # # FIXME use this one to let the dqn do nothing but run
         # self.actions = [
