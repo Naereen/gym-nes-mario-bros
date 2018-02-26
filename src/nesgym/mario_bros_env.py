@@ -28,14 +28,14 @@ class MarioBrosEnv(NESEnv):
         # TODO find the best (smallest) set of action
         self.actions = [
             'A',    # jump
-            # 'L',    # left
+            'L',    # left
             'LA',   # left+jump
-            # 'R',    # right
+            'R',    # right
             'RA',   # right+jump
-            # 'B',    # run  XXX does nothing! Is it good to have an action that does nothing?
+            'B',    # run  XXX does nothing! Is it good to have an action that does nothing?
             # 'BA',   # run+jump
-            'BL',   # run+left
-            'BR',   # run+right
+            # 'BL',   # run+left
+            # 'BR',   # run+right
             # 'BLA',   # run+left+jump
             # 'BRA',   # run+right+jump
             # 'S',    # enter  XXX pause! Is it good to have an action that does nothing?

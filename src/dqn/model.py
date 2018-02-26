@@ -10,7 +10,7 @@ import keras
 from keras.layers.convolutional import Conv2D
 from keras.layers.core import Flatten
 from keras.layers import Dense, Input
-from keras.models import Model
+from keras.models import Model, load_model, save_model
 from keras import optimizers
 from keras.callbacks import TensorBoard
 from keras import backend as K
@@ -31,8 +31,8 @@ def q_function(input_shape, num_actions):
     """Description of the Q-function as Keras model."""
     image_input = Input(shape=input_shape)
     out = Conv2D(filters=32, kernel_size=8, strides=(4, 4), padding='valid', activation='relu')(image_input)
-    # out = Conv2D(filters=64, kernel_size=4, strides=(2, 2), padding='valid', activation='relu')(out)
-    # out = Conv2D(filters=64, kernel_size=3, strides=(1, 1), padding='valid', activation='relu')(out)
+    out = Conv2D(filters=64, kernel_size=4, strides=(2, 2), padding='valid', activation='relu')(out)
+    out = Conv2D(filters=64, kernel_size=3, strides=(1, 1), padding='valid', activation='relu')(out)
     out = Flatten()(out)
     out = Dense(512, activation='relu')(out)
     q_value = Dense(num_actions)(out)
@@ -98,6 +98,20 @@ class DoubleDQN(object):
 
         self.tensorboard_callback = TensorBoard(log_dir=log_dir)
         self.latest_losses = deque(maxlen=100)
+
+    def summary(self):
+        print("Summary of base model:")
+        self.base_model.summary()
+        print("Summary of target model:")
+        self.target_model.summary()
+
+    def plot_model(self, to_file='dqn.png'):
+        # https://keras.io/utils/#plot_model
+        keras.utils.plot_model(self.target_model, to_file=to_file, show_shapes=True, show_layer_names=True)
+
+    def get_config(self):
+        # FIXME implement this so the model can be pickled and saved/loaded from a file!
+        raise NotImplementedError
 
     def choose_action(self, step, obs):
         self.replay_buffer_idx = self.replay_buffer.store_frame(obs)

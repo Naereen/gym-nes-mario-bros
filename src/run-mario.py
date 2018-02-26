@@ -14,8 +14,12 @@ from gym import wrappers
 import nesgym
 import numpy as np
 
-from dqn.model import DoubleDQN
+from dqn.model import DoubleDQN, load_model, save_model
 from dqn.utils import PiecewiseSchedule
+
+
+dqn_model_name = "dqn"
+dqn_model_name_file = dqn_model_name + '.h5'
 
 
 def get_env():
@@ -26,8 +30,14 @@ def get_env():
     return env
 
 
-# Keep a log of the max score seen so far,
-# to plot it as a function of time steps
+def safe_save_model(dqn, dqn_model_name_file):
+    try:
+        save_model(dqn, dqn_model_name_file)
+    except (ValueError, NotImplementedError, AttributeError):
+        print("Unable to save the DQN model to file '{}'...".format(dqn_model_name_file))  # DEBUG
+
+
+# Keep a log of the max score seen so far, to plot it as a function of time steps
 def log_max_seen_score(step, max_seen_score):
     with open("max_seen_score.csv", 'a') as f:
         f.write("\n{}, {}".format(step, max_seen_score))
@@ -41,8 +51,10 @@ def mario_main():
     max_timesteps = 400000
     max_seen_score = 0
 
-    with open("max_seen_score.csv", 'w') as f:
-        f.write("step, max_seen_score")
+    # Create the log file if needed
+    if not os.path.isfile("max_seen_score.csv"):
+        with open("max_seen_score.csv", 'w') as f:
+            f.write("step, max_seen_score")
 
     exploration_schedule = PiecewiseSchedule(
         [
@@ -52,17 +64,27 @@ def mario_main():
         ], outside_value=0.01
     )
 
-    dqn = DoubleDQN(image_shape=(84, 110, 1),
+    dqn = None
+    # How to save the DQN to a file after every training
+    # in order to resume from previous step if training was stopped?
+    if os.path.isfile(dqn_model_name_file):
+        try:
+            dqn = load_model(dqn_model_name_file)
+            print("Successfully loaded the DQN model from file '{}'...".format(dqn_model_name_file))  # DEBUG
+        except (ValueError, NotImplementedError, AttributeError):
+            print("Unable to load the DQN model from file '{}'...".format(dqn_model_name_file))  # DEBUG
+    if dqn is None:
+        dqn = DoubleDQN(image_shape=(84, 110, 1),
                     num_actions=env.action_space.n,
-                    # XXX Heavy simulations
+                    # # XXX Heavy simulations
                     # training_starts=10000,
                     # target_update_freq=4000,
                     # training_batch_size=64,
-                    # XXX light simulations?
+                    # # XXX light simulations?
                     training_starts=5000,
                     target_update_freq=100,
                     training_batch_size=4,
-                    # Other parameters
+                    # Other parameters...
                     frame_history_len=4,
                     replay_buffer_size=100000,  # XXX reduce if MemoryError
                     exploration=exploration_schedule
@@ -82,6 +104,10 @@ def mario_main():
             )
             if len(episode_rewards) > 0:
                 print("last 100 episode mean rewards: ", np.mean(np.array(episode_rewards)))
+            # also print summary of the model!
+            dqn.summary()
+            # and save the model!
+            safe_save_model(dqn, dqn_model_name_file)
 
         # XXX Enable this to see the Python view of the screen (PIL.imshow)
         # env.render()
@@ -92,7 +118,7 @@ def mario_main():
         if done and reward < 0:
             reward = 0  # force this manually to avoid bug of getting -400 10 times in a row!
         dqn.learn(step, action, reward, done, info)
-        # print("Step", step, "\t action =", action, "gave reward =", reward, " score =", info['score'], "and max score =", max_seen_score)  # DEBUG
+
         print("Step {:>6}, action {}, gave reward {:>6}, score {:>6} and max score {:>6}, life {:>2} and level {:>2}.".format(step, action, reward, info['score'], max_seen_score, info['life'], info['level']))  # DEBUG
 
         if info['score'] > max_seen_score:
