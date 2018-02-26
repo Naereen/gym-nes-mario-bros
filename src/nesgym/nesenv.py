@@ -23,7 +23,7 @@ from gym.utils import seeding
 package_directory = os.path.dirname(os.path.abspath(__file__))
 SEP = '|'
 
-# NES palette
+# NES palette, 128 colors (7 bits for colors)
 rgb = {
     '00': (116, 116, 116),
     '01': (36, 24, 140),

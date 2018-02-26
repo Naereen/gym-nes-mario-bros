@@ -52,7 +52,7 @@ def mario_main():
         ], outside_value=0.01
     )
 
-    dqn = DoubleDQN(image_shape=(84, 84, 1),
+    dqn = DoubleDQN(image_shape=(84, 110, 1),
                     num_actions=env.action_space.n,
                     # XXX Heavy simulations
                     # training_starts=10000,
