@@ -6,7 +6,7 @@ An EXPERIMENTAL [openai-gym](https://gym.openai.com/) wrapper for NES games.
 > You can use a [`virtualenv`](http://virtualenv.pypa.io/) or a [`pipenv`](https://docs.pipenv.org/) if you want to install the dependencies in an isolated environment.
 
 0. Use Python 3 only.
-1. Install [openai-gym](https://github.com/openai/gym#installing-everything) and [keras](https://keras.io) with [tensorflow](https://www.tensorflow.org/) backend (with [`pip`](https://pip.pypa.io/)), and `python-opencv` (on Debian/Ubuntu, `sudo apt install python3-open`).
+1. Install [openai-gym](https://github.com/openai/gym#installing-everything) and [keras](https://keras.io) with [tensorflow](https://www.tensorflow.org/) backend (with [`pip`](https://pip.pypa.io/)), and `cv2` (OpenCV module, on Debian/Ubuntu, `sudo pip install opencv-python`, see [this SO question](https://stackoverflow.com/a/41709383/)).
 2. Install the [`fceux` NES emulator](http://www.fceux.com/) and make sure `fceux` is in your `$PATH`. In Debian/Ubuntu, you can simple use `sudo apt install fceux`. Version 2 at least is needed.
 3. Find a `.nes` ROM for [Mario](https://en.wikipedia.org/wiki/Mario_Bros.) [Bros.](http://datacrystal.romhacking.net/wiki/Mario_Bros.) game (any dump for the Nintendo NES will do). Save it to [`src/roms/mario_bros.nes`](src/roms/).
 4. Copy state files from `roms/fcs/*` to your `~/.fceux/fcs/` (faster loading for the beginning of the game).
