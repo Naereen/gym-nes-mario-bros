@@ -17,28 +17,6 @@ def linear_interpolation(l, r, alpha):
     return l + alpha * (r - l)
 
 
-# def saveModelToFile(model, name="dqn", jsonpath=None, h5path=None):
-#     if name is not None:
-#         if jsonpath is None:
-#             jsonpath = name + ".json"
-#         if h5path is None:
-#             h5path = name + "_weights.h5"
-#     with open(jsonpath, 'w') as f:
-#         f.write(model.to_json())
-#     model.save_weights(h5path, overwrite=True)
-
-
-# def loadModelFromFile(model, name="dqn", jsonpath=None, h5path=None):
-#     if name is not None:
-#         if jsonpath is None:
-#             jsonpath = name + ".json"
-#         if h5path is None:
-#             h5path = name + "_weights.h5"
-#     with open(jsonpath, 'w') as f:
-#         model = model_from_json(f.read())
-#     model.load_weights(h5path)
-
-
 class PiecewiseSchedule(object):
     def __init__(self, endpoints, interpolation=linear_interpolation, outside_value=None):
         """Piecewise schedule.

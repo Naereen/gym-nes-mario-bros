@@ -14,12 +14,12 @@ from gym import wrappers
 import nesgym
 import numpy as np
 
-from dqn.model import DoubleDQN, load_model, save_model
+from dqn.model import DoubleDQN
 from dqn.utils import PiecewiseSchedule
 
 
-dqn_model_name = "dqn"
-dqn_model_name_file = dqn_model_name + '.h5'
+dqn_model_name = "DQN_MarioBros_v1"
+dqn_weights_file = dqn_model_name + '.h5'
 
 
 def get_env():
@@ -28,13 +28,6 @@ def get_env():
     expt_dir = '/tmp/mario/'
     env = wrappers.Monitor(env, os.path.join(expt_dir, "gym"), force=True)
     return env
-
-
-def safe_save_model(dqn, dqn_model_name_file):
-    try:
-        save_model(dqn, dqn_model_name_file)
-    except (ValueError, NotImplementedError, AttributeError):
-        print("Unable to save the DQN model to file '{}'...".format(dqn_model_name_file))  # DEBUG
 
 
 # Keep a log of the max score seen so far, to plot it as a function of time steps
@@ -64,31 +57,33 @@ def mario_main():
         ], outside_value=0.01
     )
 
-    dqn = None
+    dqn = DoubleDQN(image_shape=(84, 110, 1),
+                num_actions=env.action_space.n,
+                # # XXX Heavy simulations
+                # training_starts=10000,
+                # target_update_freq=4000,
+                # training_batch_size=64,
+                # # XXX light simulations?
+                training_starts=5000,
+                target_update_freq=100,
+                training_batch_size=4,
+                # Other parameters...
+                frame_history_len=4,
+                replay_buffer_size=100000,  # XXX reduce if MemoryError
+                exploration=exploration_schedule,
+                name=dqn_model_name
+            )
+
     # How to save the DQN to a file after every training
     # in order to resume from previous step if training was stopped?
-    if os.path.isfile(dqn_model_name_file):
+    if os.path.isfile(dqn_weights_file):
         try:
-            dqn = load_model(dqn_model_name_file)
-            print("Successfully loaded the DQN model from file '{}'...".format(dqn_model_name_file))  # DEBUG
+            dqn.load_weights(dqn_weights_file)
+            print("Successfully loaded the DQN weights from file '{}'...".format(dqn_weights_file))  # DEBUG
         except (ValueError, NotImplementedError, AttributeError):
-            print("Unable to load the DQN model from file '{}'...".format(dqn_model_name_file))  # DEBUG
-    if dqn is None:
-        dqn = DoubleDQN(image_shape=(84, 110, 1),
-                    num_actions=env.action_space.n,
-                    # # XXX Heavy simulations
-                    # training_starts=10000,
-                    # target_update_freq=4000,
-                    # training_batch_size=64,
-                    # # XXX light simulations?
-                    training_starts=5000,
-                    target_update_freq=100,
-                    training_batch_size=4,
-                    # Other parameters...
-                    frame_history_len=4,
-                    replay_buffer_size=100000,  # XXX reduce if MemoryError
-                    exploration=exploration_schedule
-                )
+            print("Unable to load the DQN weights from file '{}'...".format(dqn_weights_file))  # DEBUG
+
+    dqn.save_model()
 
     reward_sum_episode = 0
     num_episodes = 0
@@ -107,7 +102,7 @@ def mario_main():
             # also print summary of the model!
             dqn.summary()
             # and save the model!
-            safe_save_model(dqn, dqn_model_name_file)
+            dqn.save_weights(dqn_weights_file)
 
         # XXX Enable this to see the Python view of the screen (PIL.imshow)
         # env.render()

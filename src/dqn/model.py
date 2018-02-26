@@ -6,6 +6,7 @@
 #
 from __future__ import division, print_function  # Python 2 compatibility
 
+import os
 import keras
 from keras.layers.convolutional import Conv2D
 from keras.layers.core import Flatten
@@ -23,6 +24,7 @@ from .utils import LinearSchedule, PiecewiseSchedule
 from collections import deque
 
 
+# DEBUG
 debug_print = True
 debug_print = False
 
@@ -57,7 +59,8 @@ class DoubleDQN(object):
                  target_update_freq=1000,
                  reward_decay=0.99,
                  exploration=LinearSchedule(5000, 0.1),
-                 log_dir="logs/"):
+                 log_dir="logs/",
+                 name="DQN"):
         """
             Double Deep Q Network
 
@@ -76,6 +79,7 @@ class DoubleDQN(object):
             log_dir: path to write tensorboard logs
         """
         super().__init__()
+        self.name = name
         self.num_actions = num_actions
         self.training_freq = training_freq
         self.training_starts = training_starts
@@ -99,19 +103,39 @@ class DoubleDQN(object):
         self.tensorboard_callback = TensorBoard(log_dir=log_dir)
         self.latest_losses = deque(maxlen=100)
 
+    # --- Interface to Keras models
+
     def summary(self):
-        print("Summary of base model:")
-        self.base_model.summary()
-        print("Summary of target model:")
+        print("Summary of the model:")
         self.target_model.summary()
 
     def plot_model(self, to_file='dqn.png'):
         # https://keras.io/utils/#plot_model
         keras.utils.plot_model(self.target_model, to_file=to_file, show_shapes=True, show_layer_names=True)
 
-    def get_config(self):
-        # FIXME implement this so the model can be pickled and saved/loaded from a file!
-        raise NotImplementedError
+    # https://keras.io/models/about-keras-models/
+
+    def load_weights(self, filepath=None):
+        if filepath is None: filepath = self.name + ".h5"
+        self.target_model.load_weights(filepath)
+
+    def save_weights(self, filepath=None, overwrite=True):
+        if filepath is None: filepath = self.name + ".h5"
+        self.target_model.save_weights(filepath, overwrite=overwrite)
+
+    def save_model(self, filepath=None, yaml=False, overwrite=True):
+        if filepath is None:
+            filepath = self.name + (".yaml" if yaml else ".json")
+        method = self.target_model.to_yaml if yaml else self.target_model.to_json
+        # don't overwrite existing file
+        if os.path.isfile(filepath) and not overwrite:
+            print("save_model failed, as the file {} already existed (you can force to overwrite it with 'overwrite=True'...".format(filepath))  # DEBUG
+            return 1
+        model_string = method()
+        with open(filepath, 'w') as f:
+            return f.write(model_string)
+
+    # ---
 
     def choose_action(self, step, obs):
         self.replay_buffer_idx = self.replay_buffer.store_frame(obs)
@@ -163,7 +187,9 @@ class DoubleDQN(object):
             print("done mask:\n", done_mask)  # DEBUG
             print("q: \n", q)  # DEBUG
 
-        # self.base_model.fit(obs_t, q, batch_size=self.training_batch_size, epochs=1, callbacks=self.tensorboard_callback)
+        # XXX How to enable the TensorBoard callback?
+        # self.base_model.fit(obs_t, q, batch_size=self.training_batch_size, epochs=1, callbacks=[self.tensorboard_callback])
+
         loss = self.base_model.train_on_batch(obs_t, q)
         self.latest_losses.append(loss)
 
