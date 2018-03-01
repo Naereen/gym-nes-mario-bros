@@ -41,6 +41,17 @@ function nes_clear_reset_flag()
   flag_reset = false
 end
 
+-- read the pipe number from a file
+function emulatornumber()
+  local f = io.open("/tmp/nesgym_pipenumber.txt", "r")
+  local number = 0
+  if f then
+    number = tonumber(f:read())
+  end
+  f:close()
+  return number
+end
+
 -- called once when emulator starts
 function nes_init()
   -- FIXME reduce from "maximum" to "normal" if needed
@@ -54,7 +65,8 @@ function nes_init()
     end
   end
 
-  pipe_prefix = '/tmp/nesgym-pipe'
+  -- pipe_prefix = '/tmp/nesgym-pipe'
+  pipe_prefix = string.format("/tmp/nesgym-pipe-%i", emulatornumber())
   -- from emulator to client
   pipe_out, _, _ = io.open(pipe_prefix .. "-in", "w")
   -- from client to emulator

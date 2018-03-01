@@ -7,6 +7,7 @@
 from __future__ import division, print_function  # Python 2 compatibility
 
 import os
+import os.path
 import subprocess
 import sys
 import struct
@@ -22,6 +23,8 @@ from gym.utils import seeding
 
 package_directory = os.path.dirname(os.path.abspath(__file__))
 SEP = '|'
+
+_pipenumber_filename = "/tmp/nesgym_pipenumber.txt"
 
 # NES palette, 128 colors (7 bits for colors)
 rgb = {
@@ -167,6 +170,10 @@ class NESEnv(gym.Env, utils.EzPickle):
     def __init__(self, **kwargs):
         utils.EzPickle.__init__(self)
         self.curr_seed = 0
+        self._emulatornumber = 0
+        self._update_emulatornumber()
+        print("Using emulator number", self._emulatornumber)  # DEBUG
+
         self.screen = np.zeros((SCREEN_HEIGHT, SCREEN_WIDTH, 3), dtype=np.uint8)
         self.closed = False
         self.can_send_command = True
@@ -292,6 +299,15 @@ class NESEnv(gym.Env, utils.EzPickle):
     ## ------------  end emulator  -------------
 
     ## ------------- pipes ---------------
+    def _update_emulatornumber(self):
+        nb = self._emulatornumber
+        if os.path.exists(_pipenumber_filename):
+            with open(_pipenumber_filename, 'r') as f:
+                nb = int(f.readline()) + 1
+        with open(_pipenumber_filename, 'w') as f:
+            f.write(str(nb))
+        self._emulatornumber = nb
+
     def _write_to_pipe(self, message):
         if not self.pipe_out:
             # arg 1 for line buffering - see python doc
@@ -341,9 +357,9 @@ class NESEnv(gym.Env, utils.EzPickle):
 
     def _open_pipes(self):
         # emulator to client
-        self.pipe_in_name = '/tmp/nesgym-pipe-in'
+        self.pipe_in_name = '/tmp/nesgym-pipe-{}-in'.format(self._emulatornumber)
         # client to emulator
-        self.pipe_out_name = '/tmp/nesgym-pipe-out'
+        self.pipe_out_name = '/tmp/nesgym-pipe-{}-out'.format(self._emulatornumber)
         self._ensure_create_pipe(self.pipe_in_name)
         self._ensure_create_pipe(self.pipe_out_name)
 

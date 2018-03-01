@@ -9,6 +9,19 @@ from __future__ import division, print_function  # Python 2 compatibility
 import os
 from collections import deque
 
+from os import getenv
+PARALLEL_EMULATORS = 1  # XXX Turn down parallel emulators if needed
+# PARALLEL_EMULATORS = 4  # Nb of cores, to have exactly one emulator process by cores
+PARALLEL_EMULATORS = int(getenv('N', PARALLEL_EMULATORS))
+
+
+from joblib import Parallel, delayed
+# Parallel(n_jobs=PARALLEL_EMULATORS)(
+#     delayed(delayed_play)(XXX)
+#     for repeatId in range(PARALLEL_EMULATORS)
+# )
+
+
 import gym
 from gym import wrappers
 import nesgym
@@ -29,6 +42,16 @@ def get_env():
     env = wrappers.Monitor(env, os.path.join(expt_dir, "gym"), force=True)
     return env
 
+
+def get_envs(N=1):
+    envs = []
+    for _ in range(N):
+        env = gym.make('nesgym/MarioBros-v0')
+        env = nesgym.wrap_nes_env(env)
+        expt_dir = '/tmp/mario/'
+        env = wrappers.Monitor(env, os.path.join(expt_dir, "gym"), force=True)
+        envs.append(env)
+    return envs
 
 # Keep a log of the max score seen so far, to plot it as a function of time steps
 def log_max_seen_score(step, max_seen_score):
