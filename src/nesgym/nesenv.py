@@ -11,7 +11,15 @@ import os.path
 import subprocess
 import sys
 import struct
-from threading import Thread, Condition
+
+
+USE_MULTIPROCESS = False
+
+if USE_MULTIPROCESS:
+    from multiprocessing import Process as Thread
+    from multiprocessing import Condition
+else:
+    from threading import Thread, Condition
 
 import numpy as np
 from PIL import Image
@@ -24,7 +32,7 @@ from gym.utils import seeding
 package_directory = os.path.dirname(os.path.abspath(__file__))
 SEP = '|'
 
-_pipenumber_filename = "/tmp/nesgym_pipenumber.txt"
+_pipenumber_filename = "/tmp/nesgym-pipe-number.txt"
 
 # NES palette, 128 colors (7 bits for colors)
 rgb = {
@@ -172,7 +180,7 @@ class NESEnv(gym.Env, utils.EzPickle):
         self.curr_seed = 0
         self._emulatornumber = 0
         self._update_emulatornumber()
-        print("Using emulator number", self._emulatornumber)  # DEBUG
+        print("Info: Using emulator number {} ...".format(self._emulatornumber))  # DEBUG
 
         self.screen = np.zeros((SCREEN_HEIGHT, SCREEN_WIDTH, 3), dtype=np.uint8)
         self.closed = False
@@ -256,7 +264,6 @@ class NESEnv(gym.Env, utils.EzPickle):
         self.life = 2
         self.level = 1
         self.screen.fill(0)
-        # self.screen = np.zeros((SCREEN_HEIGHT, SCREEN_WIDTH, 3), dtype=np.uint8)
         self._write_to_pipe('reset' + SEP)
         with self.command_cond:
             self.can_send_command = False
@@ -285,14 +292,16 @@ class NESEnv(gym.Env, utils.EzPickle):
         if not self.lua_interface_path:
             raise Exception("Must specify a lua interface file to get scores!")
 
+        print("Opening pipes...")
         self._open_pipes()
 
+        print("Starting fceux emulator...")
         args = ['fceux', '--loadlua', self.lua_interface_path, self.rom_file_path, '&']
         proc = subprocess.Popen(' '.join(args), shell=True)
-        print('started proc')
         proc.communicate()
         # FIXME: no matter whether it starts, proc.returncode is always zero
         self.emulator_started = True
+        print("Started fceux emulator!")
 
     def _joypad(self, button):
         self._write_to_pipe('joypad' + SEP + button)
@@ -326,7 +335,8 @@ class NESEnv(gym.Env, utils.EzPickle):
                 if msg_type == "wait_for_command":
                     with self.command_cond:
                         self.can_send_command = True
-                        self.command_cond.notifyAll()
+                        # self.command_cond.notifyAll()
+                        self.command_cond.notify_all()
                 elif msg_type == "screen":
                     screen_pixels = body[2]
                     pvs = np.array(struct.unpack('B'*len(screen_pixels), screen_pixels))
@@ -357,13 +367,16 @@ class NESEnv(gym.Env, utils.EzPickle):
 
     def _open_pipes(self):
         # emulator to client
-        self.pipe_in_name = '/tmp/nesgym-pipe-{}-in'.format(self._emulatornumber)
-        # client to emulator
-        self.pipe_out_name = '/tmp/nesgym-pipe-{}-out'.format(self._emulatornumber)
+        self.pipe_in_name = "/tmp/nesgym-pipe-{}-in".format(self._emulatornumber)
         self._ensure_create_pipe(self.pipe_in_name)
+        # client to emulator
+        self.pipe_out_name = "/tmp/nesgym-pipe-{}-out".format(self._emulatornumber)
         self._ensure_create_pipe(self.pipe_out_name)
 
-        self.thread_incoming = Thread(target=self._pipe_handler)
+        self.thread_incoming = Thread(
+            target=self._pipe_handler,
+            # name="/tmp/nesgym-pipe-{}-inout".format(self._emulatornumber),
+        )
         self.thread_incoming.start()
 
     def _ensure_create_pipe(self, pipe_name):

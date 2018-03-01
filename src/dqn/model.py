@@ -109,7 +109,7 @@ class DoubleDQN(object):
         print("Summary of the model:")
         self.target_model.summary()
 
-    def plot_model(self, to_file='dqn.png'):
+    def plot_model(self, to_file='dqn.svg'):
         # https://keras.io/utils/#plot_model
         keras.utils.plot_model(self.target_model, to_file=to_file, show_shapes=True, show_layer_names=True)
 

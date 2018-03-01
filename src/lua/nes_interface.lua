@@ -43,7 +43,7 @@ end
 
 -- read the pipe number from a file
 function emulatornumber()
-  local f = io.open("/tmp/nesgym_pipenumber.txt", "r")
+  local f = io.open("/tmp/nesgym-pipe-number.txt", "r")
   local number = 0
   if f then
     number = tonumber(f:read())
