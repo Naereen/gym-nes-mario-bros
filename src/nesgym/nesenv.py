@@ -13,13 +13,10 @@ import sys
 import struct
 
 
-USE_MULTIPROCESS = False
-
-if USE_MULTIPROCESS:
-    from multiprocessing import Process as Thread
-    from multiprocessing import Condition
-else:
-    from threading import Thread, Condition
+# USE_MULTIPROCESS = False
+# if USE_MULTIPROCESS:
+#     from multiprocessing import Process as Thread, Condition
+from threading import Thread, Condition
 
 import numpy as np
 from PIL import Image
@@ -169,8 +166,12 @@ rgb = {
 palette_rgb = np.array([rgb[key] for key in sorted(rgb.keys())])
 palette_grayscale = np.array([(0.299*r+0.587*g+0.114*b) / 256.0 for r, g, b in palette_rgb])
 
-SCREEN_WIDTH = 256
-SCREEN_HEIGHT = 224
+SCREEN_WIDTH, SCREEN_HEIGHT = 256, 224
+
+# XXX Change here if you want the DQN to learn from the frame and not the difference of successive frame
+USE_DIFFERENCE_OF_FRAMES = False
+USE_DIFFERENCE_OF_FRAMES = True
+
 
 class NESEnv(gym.Env, utils.EzPickle):
     metadata = {'render.modes': ['human', 'rgb_array']}
@@ -236,10 +237,13 @@ class NESEnv(gym.Env, utils.EzPickle):
         if self.frame >= self.episode_length:
             done = True
             self.frame = 0
-        # WARNING Use difference of consecutive screens instead of just the screen
-        obs[:] = self.screen[:] - self.last_screen[:]
-        self.last_screen[:] = self.screen[:]
-        # Use .copy() if this [:] indexing hack don't work
+        if USE_DIFFERENCE_OF_FRAMES:
+            # WARNING Use difference of consecutive screens instead of just the screen
+            obs = self.screen[:] - self.last_screen[:]
+            self.last_screen[:] = self.screen[:]
+            # DEBUG Use .copy() if this [:] indexing hack don't work
+        else:
+            obs = self.screen[:]
         info = {
             "frame": self.frame,
             "score": self.score,
@@ -333,8 +337,8 @@ class NESEnv(gym.Env, utils.EzPickle):
                 if msg_type == "wait_for_command":
                     with self.command_cond:
                         self.can_send_command = True
-                        # self.command_cond.notifyAll()
-                        self.command_cond.notify_all()
+                        self.command_cond.notify_all()  # FIXME not sure what to use here
+                        # self.command_cond.notify(1)
                 elif msg_type == "screen":
                     screen_pixels = body[2]
                     pvs = np.array(struct.unpack('B'*len(screen_pixels), screen_pixels))
@@ -376,6 +380,7 @@ class NESEnv(gym.Env, utils.EzPickle):
             # name="/tmp/nesgym-pipe-{}-inout".format(self._emulatornumber),
         )
         self.thread_incoming.start()
+        print("Using a thread of name {} and id {} (alive ? {})...".format(self.thread_incoming.name, self.thread_incoming.ident, self.thread_incoming.is_alive()))  # DEBUG
 
     def _ensure_create_pipe(self, pipe_name):
         if not os.path.exists(pipe_name):

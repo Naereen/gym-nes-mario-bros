@@ -4,6 +4,7 @@
 -- MIT License https://lbesson.mit-license.org/
 
 -- global variables
+SCREEN_WIDTH, SCREEN_HEIGHT = 256, 224
 screen = {} -- screen pixels [x,y] = p
 pipe_out = nil -- for sending data(output e.g. screen pixels, reward) back to client
 pipe_in = nil -- for getting data(input e.g. controller status change) from client
@@ -58,9 +59,9 @@ function nes_init()
   emu.speedmode("maximum")
   -- emu.speedmode("normal")
 
-  for x = 0, 255 do
+  for x = 0, SCREEN_WIDTH - 1 do
     screen[x] = {}
-    for y = 0, 223 do
+    for y = 0, SCREEN_HEIGHT - 1 do
       screen[x][y] = -1
     end
   end
@@ -84,9 +85,9 @@ function nes_update_screen()
   local offset_y = 8
 
   write_to_pipe_partial("screen" .. SEP .. framecount .. SEP)
-  for y = 0, 223 do
+  for y = 0, SCREEN_HEIGHT - 1 do
     local screen_string = ""
-    for x = 0, 255 do
+    for x = 0, SCREEN_WIDTH - 1 do
       r, g, b, p = emu.getscreenpixel(x, y + offset_y, false)
       -- offset p by 20 so the content can never be '\n'
       screen_string = screen_string .. string.format("%c", p+20)

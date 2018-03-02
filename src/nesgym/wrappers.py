@@ -7,13 +7,29 @@
 from __future__ import division, print_function  # Python 2 compatibility
 
 from collections import deque
-import cv2
 import numpy as np
+import matplotlib.pyplot as plt
+import cv2
 import gym
 from gym import spaces
 
 from .nesenv import SCREEN_HEIGHT, SCREEN_WIDTH
-RESHAPED_HEIGHT, RESHAPED_WIDTH = 84, 110
+
+# RESHAPED_WIDTH, RESHAPED_HEIGHT = SCREEN_HEIGHT, SCREEN_WIDTH
+# RESHAPED_WIDTH, RESHAPED_HEIGHT = 110, 84
+# CROPPED_WIDTH, CROPPED_HEIGHT = 89, 84
+
+# XXX I tried to reduce the size of the observation as much as possible!
+RESHAPED_WIDTH, RESHAPED_HEIGHT = 73, 64
+CROPPED_WIDTH, CROPPED_HEIGHT = 60, 64
+
+
+# XXX Change here if you want to debug and show each imframe
+debug_imshow_each_frame = True
+debug_imshow_each_frame = False
+if debug_imshow_each_frame:
+    plt.interactive(True)
+
 
 class MaxAndSkipEnv(gym.Wrapper):
     def __init__(self, env=None, skip=4):
@@ -45,7 +61,7 @@ class MaxAndSkipEnv(gym.Wrapper):
         return obs
 
 
-def _process_frame84(frame):
+def _process_frame84(frame, self=None, show=False):
     img = np.reshape(frame, [SCREEN_HEIGHT, SCREEN_WIDTH, 3]).astype(np.float32)
     # I benchmarked, and cv2.resize is faster than skimage.transform.resize (by about 25%)
     resized_screen = cv2.resize(
@@ -55,7 +71,24 @@ def _process_frame84(frame):
         (RESHAPED_HEIGHT, RESHAPED_WIDTH),
         interpolation=cv2.INTER_LINEAR
     )
-    return np.reshape(resized_screen, [RESHAPED_HEIGHT, RESHAPED_WIDTH, 1]).astype(np.uint8)
+
+    resized_screen = resized_screen[8:-5, :]
+
+    # DEBUG by showing the *observation* (to check the cropping)
+    if show:
+        if self is not None:
+            if self._imshow_obj is None:
+                self._imshow_obj = plt.imshow(resized_screen, cmap="gray")
+            else:
+                self._imshow_obj.set_data(resized_screen)
+        else:
+            plt.imshow(resized_screen, cmap="gray")
+        plt.show(block=False)
+        plt.draw()
+        print(input("[Close plot and enter to continue]"))  # DEBUG
+
+    reshaped_screen = np.reshape(resized_screen, [CROPPED_WIDTH, CROPPED_HEIGHT, 1]).astype(np.uint8)
+    return reshaped_screen
 
 
 class ProcessFrame84(gym.Wrapper):
@@ -66,13 +99,14 @@ class ProcessFrame84(gym.Wrapper):
             shape=(RESHAPED_HEIGHT, RESHAPED_WIDTH, 1),
             dtype=np.uint8
         )
+        self._imshow_obj = None
 
     def step(self, action):
         obs, reward, done, info = self.env.step(action)
-        return _process_frame84(obs), reward, done, info
+        return _process_frame84(obs, self=self, show=debug_imshow_each_frame), reward, done, info
 
     def reset(self):
-        return _process_frame84(self.env.reset())
+        return _process_frame84(self.env.reset(), self=self, show=False)
 
 
 def wrap_nes_env(env):

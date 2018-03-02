@@ -9,9 +9,12 @@ from __future__ import division, print_function  # Python 2 compatibility
 import os
 from collections import deque
 from time import sleep
+
 PARALLEL_EMULATORS = 1  # XXX Turn down parallel emulators if needed
 # PARALLEL_EMULATORS = 4  # Nb of cores, to have exactly one emulator process by cores
 PARALLEL_EMULATORS = int(os.getenv('N', PARALLEL_EMULATORS))
+if PARALLEL_EMULATORS > 1:
+    print("WARNING: It's not working with more than one emulator in parallel!")
 
 
 # FIXME use joblib for something smart?
@@ -25,6 +28,7 @@ PARALLEL_EMULATORS = int(os.getenv('N', PARALLEL_EMULATORS))
 import gym
 from gym import wrappers
 import nesgym
+from nesgym.wrappers import CROPPED_WIDTH, CROPPED_HEIGHT
 import numpy as np
 
 from dqn.model import DoubleDQN
@@ -67,10 +71,9 @@ def mario_main(N=1):
     envs = get_envs(N=N)
 
     last_obss = [ 0 for env in envs ]
-    last_obss[0] = envs[0].reset()
     # FIXME
-    # for emulatornumber, env in enumerate(envs):
-    #     last_obss[emulatornumber] = env.reset()
+    for emulatornumber, env in enumerate(envs):
+        last_obss[emulatornumber] = env.reset()
 
     max_timesteps = 400000
     max_seen_score = 0
@@ -88,16 +91,16 @@ def mario_main(N=1):
         ], outside_value=0.01
     )
 
-    dqn = DoubleDQN(image_shape=(84, 110, 1),
+    dqn = DoubleDQN(image_shape=(CROPPED_WIDTH, CROPPED_HEIGHT, 1),
                 num_actions=envs[0].action_space.n,
-                # # XXX Heavy simulations
+                # # XXX heavy simulations
                 # training_starts=10000,
                 # target_update_freq=4000,
                 # training_batch_size=64,
                 # # XXX light simulations?
                 training_starts=5000,
-                target_update_freq=100,
-                training_batch_size=4,
+                target_update_freq=1000,
+                training_batch_size=16,
                 # Other parameters...
                 frame_history_len=4,
                 replay_buffer_size=100000,  # XXX reduce if MemoryError
@@ -175,4 +178,5 @@ def mario_main(N=1):
 
 
 if __name__ == "__main__":
+    # FIXME finish the support for running emulators in parallel
     mario_main(N=PARALLEL_EMULATORS)
