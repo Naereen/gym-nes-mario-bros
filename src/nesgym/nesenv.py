@@ -182,6 +182,7 @@ class NESEnv(gym.Env, utils.EzPickle):
         self._update_emulatornumber()
         print("Info: Using emulator number {} ...".format(self._emulatornumber))  # DEBUG
 
+        self.last_screen = np.zeros((SCREEN_HEIGHT, SCREEN_WIDTH, 3), dtype=np.uint8)
         self.screen = np.zeros((SCREEN_HEIGHT, SCREEN_WIDTH, 3), dtype=np.uint8)
         self.closed = False
         self.can_send_command = True
@@ -232,15 +233,13 @@ class NESEnv(gym.Env, utils.EzPickle):
     def _step(self, action):
         self.frame += 1
         done = False
-        # how to force a restart ONCE and not do a few restart for nothing every once in a while?
-        # if (self.frame % self.frame_skip) == 0:
-        #     if self.frame > 0 and self.life <= 0:
-        #         done = True
-        #         self.frame = 0
         if self.frame >= self.episode_length:
             done = True
             self.frame = 0
-        obs = self.screen.copy()
+        # WARNING Use difference of consecutive screens instead of just the screen
+        obs[:] = self.screen[:] - self.last_screen[:]
+        self.last_screen[:] = self.screen[:]
+        # Use .copy() if this [:] indexing hack don't work
         info = {
             "frame": self.frame,
             "score": self.score,
@@ -252,7 +251,6 @@ class NESEnv(gym.Env, utils.EzPickle):
                 self.command_cond.wait()
             self.can_send_command = False
         self._joypad(self.actions[action])
-        # XXX hack to not give a negative reward for successive steps?
         return obs, self.reward, done, info
 
     def _reset(self):

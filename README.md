@@ -1,6 +1,7 @@
-# NESGym
+# OpenAI Gym for NES games + DQN with Keras to learn Mario Bros. from raw pixels
 
-An EXPERIMENTAL [openai-gym](https://gym.openai.com/) wrapper for NES games.
+- An **EXPERIMENTAL** [openai-gym](https://gym.openai.com/) wrapper for NES games.
+- With a Double Deep Q Network to learn how to play **Mario Bros.** game from 1983.
 
 # Installation
 > You can use a [`virtualenv`](http://virtualenv.pypa.io/) or a [`pipenv`](https://docs.pipenv.org/) if you want to install the dependencies in an isolated environment.
@@ -45,11 +46,15 @@ For an example of lua file, see [`src/lua/soccer.lua`](src/lua/soccer.lua); for 
 
 # Gallery
 ## Training Atari games
-![atari](images/atari.png)
+![images/atari.png](images/atari.png)
 
 ## Training NES games
-![fc-soccer](images/soccer.png)
+### Mario Bros. game
+![images/mario.png](images/mario.png)
+> *That's new!*
 
+### Soccer game
+![images/soccer.png](images/soccer.png)
 
 ---
 
@@ -57,7 +62,7 @@ For an example of lua file, see [`src/lua/soccer.lua`](src/lua/soccer.lua); for 
 This (small) repository are published under the terms of the [MIT license](http://lbesson.mit-license.org/) (file [LICENSE](LICENSE)).
 © [Lilian Besson](https://GitHub.com/Naereen), 2018.
 
-[![Maintenance](https://img.shields.io/badge/Maintenu%3F-oui-green.svg)](https://GitHub.com/Naereen/gym-nes-mario-bros/graphs/commit-activity)
+[![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://GitHub.com/Naereen/gym-nes-mario-bros/graphs/commit-activity)
 [![Ask Me Anything !](https://img.shields.io/badge/Ask%20me-anything-1abc9c.svg)](https://GitHub.com/Naereen/gym-nes-mario-bros)
 [![Analytics](https://ga-beacon.appspot.com/UA-38514290-17/github.com/Naereen/gym-nes-mario-bros/README.md?pixel)](https://GitHub.com/Naereen/gym-nes-mario-bros/)
 
