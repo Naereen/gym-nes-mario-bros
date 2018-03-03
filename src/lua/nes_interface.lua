@@ -27,11 +27,15 @@ COMMAND_TABLE = {
 
 -- exported common functions start with nes_ prefix
 -- called before each episode
-function nes_reset()
-  flag_reset = true
+function nes_load_state()
   -- load state so we don't have to instruct to skip title screen
   state = savestate.object(10)
   savestate.load(state)
+end
+
+function nes_reset()
+  flag_reset = true
+  nes_load_state()
 end
 
 function nes_get_reset_flag()
@@ -127,6 +131,8 @@ function handle_command(line)
   local command = body[1]
   if command == 'reset' then
     nes_reset()
+  elseif command == 'loadstate' then
+    nes_load_state()
   elseif command == 'joypad' then
     -- joypad command
     local buttons = body[2]

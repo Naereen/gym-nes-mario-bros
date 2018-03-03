@@ -271,6 +271,20 @@ class NESEnv(gym.Env, utils.EzPickle):
             self.can_send_command = False
         return self.screen
 
+    def _load(self):
+        print("Info: loading reference state...")  # DEBUG
+        if not self.emulator_started:
+            self._start_emulator()
+        self.reward = 0
+        self.score = 0
+        self.life = 2
+        self.level = 1
+        self.screen.fill(0)
+        self._write_to_pipe('loadstate' + SEP)
+        with self.command_cond:
+            self.can_send_command = False
+        return self.screen
+
     def _render(self, mode='human', close=False):
         if mode == 'human':
             if self.viewer is None:

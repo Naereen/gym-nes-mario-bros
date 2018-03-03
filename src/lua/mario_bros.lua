@@ -72,6 +72,7 @@ end
 
 nes_init()
 
+total_frames = 0
 score = 0
 reward = 0
 new_score = 0
@@ -82,6 +83,9 @@ default_level = 1
 -- Actual values
 life = default_life
 level = default_level
+-- Either give 2 bonus life instead of dying, or reset
+max_nb_of_bonus_life_before_reset = 10
+nb_of_bonus_life_before_reset = 0
 
 -- XXX Experimental!
 if default_life > 2 then
@@ -100,10 +104,12 @@ while true do
   gui.text(70, 10, reward)
   gui.text(85, 10, "L:")
   gui.text(95, 10, life)
-  gui.text(125, 10, "S:")
-  gui.text(145, 10, score)
-  gui.text(170, 10, "#:")
-  gui.text(185, 10, level)
+  gui.text(105, 10, "S:")
+  gui.text(125, 10, score)
+  gui.text(150, 10, "#:")
+  gui.text(165, 10, level)
+  gui.text(180, 10, "t:")
+  gui.text(200, 10, string.format('%i', total_frames / frame_skip))
 
   if emu.framecount() % frame_skip == 0 then
     nes_ask_for_command()
@@ -123,12 +129,20 @@ while true do
         level = get_level()
       end
       nes_send_data(string.format("%02x:%06i:%02x:%02x", (reward % 256), score, life, level))
+      total_frames = total_frames + 1
       nes_update_screen()
       -- XXX Experimental infinite life, avoid restarting the game!
       if life < 1 then
-        print("Magic: bonus life to 2!")
-        set_life(default_life)
-        life = default_life
+        nb_of_bonus_life_before_reset = nb_of_bonus_life_before_reset + 1
+        if nb_of_bonus_life_before_reset < max_nb_of_bonus_life_before_reset then
+          print("Magic: bonus life to 2!")
+          set_life(default_life)
+          life = default_life
+        else
+          nb_of_bonus_life_before_reset = 0
+          print("Magic restart from reference state (instead of game over)")
+          nes_load_state()
+        end
       end
     else
       print('pipe closed')

@@ -99,10 +99,10 @@ def mario_main(N=1):
                 # training_batch_size=64,
                 # # XXX light simulations?
                 training_starts=5000,
-                target_update_freq=1000,
-                training_batch_size=16,
+                target_update_freq=500,
+                training_batch_size=64,
                 # Other parameters...
-                frame_history_len=4,
+                frame_history_len=16,  # XXX is it more efficient with history?
                 replay_buffer_size=100000,  # XXX reduce if MemoryError
                 exploration=exploration_schedule,
                 name=dqn_model_name

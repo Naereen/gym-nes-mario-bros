@@ -7,21 +7,20 @@
 from __future__ import division, print_function  # Python 2 compatibility
 
 import os
+from collections import deque
+import numpy as np
+
 import keras
 from keras.layers.convolutional import Conv2D
 from keras.layers.core import Flatten
 from keras.layers import Dense, Input
 from keras.models import Model, load_model, save_model
 from keras import optimizers
-from keras.callbacks import TensorBoard
+# from keras.callbacks import TensorBoard
 from keras import backend as K
-
-import numpy as np
 
 from .replay_buffer import ReplayBuffer
 from .utils import LinearSchedule, PiecewiseSchedule
-
-from collections import deque
 
 
 # DEBUG
@@ -49,20 +48,19 @@ def q_model(input_shape, num_actions):
 
 class DoubleDQN(object):
     def __init__(self,
-                 image_shape,
-                 num_actions,
-                 frame_history_len=4,
-                 replay_buffer_size=10000,
-                 training_freq=4,
-                 training_starts=5000,
-                 training_batch_size=32,
-                 target_update_freq=1000,
-                 reward_decay=0.99,
-                 exploration=LinearSchedule(5000, 0.1),
-                 log_dir="logs/",
-                 name="DQN"):
-        """
-            Double Deep Q Network
+                image_shape,
+                num_actions,
+                frame_history_len=4,
+                replay_buffer_size=10000,
+                training_freq=4,
+                training_starts=5000,
+                training_batch_size=32,
+                target_update_freq=1000,
+                reward_decay=0.99,
+                exploration=LinearSchedule(5000, 0.1),
+                log_dir="logs/",
+                name="DQN"):
+        """ Double Deep Q Network
 
             Parameters
             ----------
@@ -74,19 +72,18 @@ class DoubleDQN(object):
             training_starts: only train q network after this number of steps
             training_batch_size: batch size for training base q network with gradient descent
             reward_decay: decay factor(called gamma in paper) of rewards that happen in the future
-            exploration: used to generate an exploration factor(see 'epsilon-greedy' in paper).
-                         when rand(0,1) < epsilon, take random action; otherwise take greedy action.
+            exploration: used to generate an exploration factor(see 'epsilon-greedy' in paper). When rand(0,1) < epsilon, take random action; otherwise take greedy action.
             log_dir: path to write tensorboard logs
         """
         super().__init__()
-        self.name = name
-        self.num_actions = num_actions
-        self.training_freq = training_freq
-        self.training_starts = training_starts
+        self.name                = name
+        self.num_actions         = num_actions
+        self.training_freq       = training_freq
+        self.training_starts     = training_starts
         self.training_batch_size = training_batch_size
-        self.target_update_freq = target_update_freq
-        self.reward_decay = reward_decay
-        self.exploration = exploration
+        self.target_update_freq  = target_update_freq
+        self.reward_decay        = reward_decay
+        self.exploration         = exploration
 
         # use multiple frames as input to q network
         input_shape = image_shape[:-1] + (image_shape[-1] * frame_history_len,)
@@ -100,7 +97,7 @@ class DoubleDQN(object):
         # current replay buffer offset
         self.replay_buffer_idx = 0
 
-        self.tensorboard_callback = TensorBoard(log_dir=log_dir)
+        # self.tensorboard_callback = TensorBoard(log_dir=log_dir)
         self.latest_losses = deque(maxlen=100)
 
     # --- Interface to Keras models
@@ -109,31 +106,44 @@ class DoubleDQN(object):
         print("Summary of the model:")
         self.target_model.summary()
 
-    def plot_model(self, to_file='dqn.svg'):
+    def plot_model(self, base_model_path=None, target_model_path=None):
         # https://keras.io/utils/#plot_model
-        keras.utils.plot_model(self.target_model, to_file=to_file, show_shapes=True, show_layer_names=True)
+        if base_model_path is None: base_model_path = "dqn_base.svg"
+        keras.utils.plot_model(self.base_model, to_file=base_model_path, show_shapes=True, show_layer_names=True)
+        if target_model_path is None: target_model_path = "dqn_target.svg"
+        keras.utils.plot_model(self.target_model, to_file=target_model_path, show_shapes=True, show_layer_names=True)
 
     # https://keras.io/models/about-keras-models/
 
-    def load_weights(self, filepath=None):
-        if filepath is None: filepath = self.name + ".h5"
-        self.target_model.load_weights(filepath)
+    def load_weights(self, base_model_path=None, target_model_path=None):
+        if base_model_path is None: base_model_path = self.name + "_base.h5"
+        self.base_model.load_weights(base_model_path)
+        if target_model_path is None: target_model_path = self.name + "_target.h5"
+        self.target_model.load_weights(target_model_path)
 
-    def save_weights(self, filepath=None, overwrite=True):
-        if filepath is None: filepath = self.name + ".h5"
-        self.target_model.save_weights(filepath, overwrite=overwrite)
+    def save_weights(self, base_model_path=None, target_model_path=None, overwrite=True):
+        if base_model_path is None: base_model_path = self.name + "_base.h5"
+        self.base_model.save_weights(base_model_path, overwrite=overwrite)
+        if target_model_path is None: target_model_path = self.name + "_target.h5"
+        self.target_model.save_weights(target_model_path, overwrite=overwrite)
 
-    def save_model(self, filepath=None, yaml=False, overwrite=True):
-        if filepath is None:
-            filepath = self.name + (".yaml" if yaml else ".json")
-        method = self.target_model.to_yaml if yaml else self.target_model.to_json
-        # don't overwrite existing file
-        if os.path.isfile(filepath) and not overwrite:
-            print("save_model failed, as the file {} already existed (you can force to overwrite it with 'overwrite=True'...".format(filepath))  # DEBUG
-            return 1
-        model_string = method()
-        with open(filepath, 'w') as f:
-            return f.write(model_string)
+    def save_model(self, base_model_path=None, target_model_path=None, yaml=False, overwrite=True):
+        extension = (".yaml" if yaml else ".json")
+        if base_model_path is None: base_model_path = self.name + "_base" + extension
+        if target_model_path is None: target_model_path = self.name + "_target" + extension
+
+        for model, path in [
+                (self.base_model, base_model_path),
+                (self.target_model, target_model_path),
+            ]:
+            method = model.to_yaml if yaml else model.to_json
+            # don't overwrite existing file
+            if os.path.isfile(path) and not overwrite:
+                print("save_model failed, as the file {} already existed (you can force to overwrite it with 'overwrite=True'...".format(path))  # DEBUG
+                return 1
+            model_string = method()
+            with open(path, 'w') as f:
+                return f.write(model_string)
 
     # ---
 
@@ -187,7 +197,7 @@ class DoubleDQN(object):
             print("done mask:\n", done_mask)  # DEBUG
             print("q: \n", q)  # DEBUG
 
-        # XXX How to enable the TensorBoard callback?
+        # FIXME How to enable the TensorBoard callback?
         # self.base_model.fit(obs_t, q, batch_size=self.training_batch_size, epochs=1, callbacks=[self.tensorboard_callback])
 
         loss = self.base_model.train_on_batch(obs_t, q)
