@@ -75,7 +75,7 @@ def mario_main(N=1):
     for emulatornumber, env in enumerate(envs):
         last_obss[emulatornumber] = env.reset()
 
-    max_timesteps = 400000
+    max_timesteps = 1000000
     max_seen_score = 0
 
     # Create the log file if needed
@@ -94,13 +94,13 @@ def mario_main(N=1):
     dqn = DoubleDQN(image_shape=(CROPPED_WIDTH, CROPPED_HEIGHT, 1),
                 num_actions=envs[0].action_space.n,
                 # # XXX heavy simulations
-                # training_starts=10000,
-                # target_update_freq=4000,
-                # training_batch_size=64,
+                training_starts=10000,
+                target_update_freq=4000,
+                training_batch_size=64,
                 # # XXX light simulations?
-                training_starts=5000,
-                target_update_freq=500,
-                training_batch_size=16,
+                # training_starts=5000,
+                # target_update_freq=500,
+                # training_batch_size=16,
                 # Other parameters...
                 frame_history_len=4,  # XXX is it more efficient with history?
                 replay_buffer_size=100000,  # XXX reduce if MemoryError
