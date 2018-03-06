@@ -36,7 +36,6 @@ from dqn.utils import PiecewiseSchedule
 
 
 dqn_model_name = "DQN_MarioBros_v1"
-dqn_weights_file = dqn_model_name + '.h5'
 
 
 def get_env():
@@ -62,12 +61,12 @@ def get_envs(N=1):
     return envs
 
 # Keep a log of the max score seen so far, to plot it as a function of time steps
-def log_max_seen_score(step, max_seen_score):
-    with open("max_seen_score.csv", 'a') as f:
+def log_max_seen_score(step, max_seen_score, max_seen_score_csv):
+    with open(max_seen_score_csv, 'a') as f:
         f.write("\n{}, {}".format(step, max_seen_score))
 
 
-def mario_main(N=1):
+def mario_main(N=1, dqn_model_name=dqn_model_name):
     envs = get_envs(N=N)
 
     last_obss = [ 0 for env in envs ]
@@ -75,12 +74,16 @@ def mario_main(N=1):
     for emulatornumber, env in enumerate(envs):
         last_obss[emulatornumber] = env.reset()
 
+    _emulatornumber = envs[0].env.env.env.env._emulatornumber
+    dqn_model_name = "{}-{}".format(dqn_model_name, _emulatornumber)
+
     max_timesteps = 1000000
     max_seen_score = 0
 
     # Create the log file if needed
-    if not os.path.isfile("max_seen_score.csv"):
-        with open("max_seen_score.csv", 'w') as f:
+    max_seen_score_csv = "max_seen_score_{}.csv".format(_emulatornumber)
+    if not os.path.isfile(max_seen_score_csv):
+        with open(max_seen_score_csv, 'w') as f:
             f.write("step, max_seen_score")
 
     exploration_schedule = PiecewiseSchedule(
@@ -110,12 +113,12 @@ def mario_main(N=1):
 
     # How to save the DQN to a file after every training
     # in order to resume from previous step if training was stopped?
-    if os.path.isfile(dqn_weights_file):
+    if os.path.isfile(dqn_model_name + '.h5'):
         try:
-            dqn.load_weights(dqn_weights_file)
-            print("Successfully loaded the DQN weights from file '{}'...".format(dqn_weights_file))  # DEBUG
+            dqn.load_weights(dqn_model_name + '.h5')
+            print("Successfully loaded the DQN weights from file '{}'...".format(dqn_model_name + '.h5'))  # DEBUG
         except (ValueError, NotImplementedError, AttributeError):
-            print("Unable to load the DQN weights from file '{}'...".format(dqn_weights_file))  # DEBUG
+            print("Unable to load the DQN weights from file '{}'...".format(dqn_model_name + '.h5'))  # DEBUG
 
     dqn.save_model()
     dqn.plot_model()
@@ -138,7 +141,7 @@ def mario_main(N=1):
             # also print summary of the model!
             dqn.summary()
             # and save the model!
-            dqn.save_weights(dqn_weights_file)
+            dqn.save_weights(dqn_model_name + '.h5')
 
         # --- Parallel loops for different environments
         for emulatornumber, env in enumerate(envs):
@@ -163,7 +166,7 @@ def mario_main(N=1):
             if info['score'] > max_seen_score:
                 max_seen_score = info['score']
                 print("!!New total score record!!", max_seen_score)
-                log_max_seen_score(step, max_seen_score)
+                log_max_seen_score(step, max_seen_score, max_seen_score_csv)
             if done:
                 last_obs = env.reset()
                 if info['frame'] > 0:  # we actually played a few frames
