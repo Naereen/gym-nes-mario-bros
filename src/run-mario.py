@@ -7,6 +7,7 @@
 from __future__ import division, print_function  # Python 2 compatibility
 
 import os
+import sys
 from collections import deque
 from time import sleep
 
@@ -69,12 +70,15 @@ def log_max_seen_score(step, max_seen_score, max_seen_score_csv):
 def mario_main(N=1, dqn_model_name=dqn_model_name):
     envs = get_envs(N=N)
 
-    last_obss = [ 0 for env in envs ]
-    # FIXME
+    last_observations = [ 0 for env in envs ]
+    # FIXME finish the support for running emulators in parallel
     for emulatornumber, env in enumerate(envs):
-        last_obss[emulatornumber] = env.reset()
+        last_observations[emulatornumber] = env.reset()
 
-    _emulatornumber = envs[0].env.env.env.env._emulatornumber
+    try:
+        _emulatornumber = envs[0].env.env.env.env._emulatornumber
+    except:
+        _emulatornumber = 0
     dqn_model_name = "{}-{}".format(dqn_model_name, _emulatornumber)
 
     max_timesteps = 1000000
@@ -105,8 +109,8 @@ def mario_main(N=1, dqn_model_name=dqn_model_name):
                 # target_update_freq=500,
                 # training_batch_size=16,
                 # Other parameters...
-                frame_history_len=4,  # XXX is it more efficient with history?
-                replay_buffer_size=100000,  # XXX reduce if MemoryError
+                frame_history_len=8,  # XXX is it more efficient with history?
+                replay_buffer_size=500000,  # XXX reduce if MemoryError
                 exploration=exploration_schedule,
                 name=dqn_model_name
             )
@@ -145,7 +149,7 @@ def mario_main(N=1, dqn_model_name=dqn_model_name):
 
         # --- Parallel loops for different environments
         for emulatornumber, env in enumerate(envs):
-            last_obs = last_obss[emulatornumber]
+            last_obs = last_observations[emulatornumber]
 
             # XXX Enable this to see the Python view of the screen (PIL.imshow)
             # env.render()
@@ -177,7 +181,10 @@ def mario_main(N=1, dqn_model_name=dqn_model_name):
             else:
                 last_obs = obs
 
-            last_obss[emulatornumber] = last_obs
+            last_observations[emulatornumber] = last_obs
+
+    print("Simulation is done, exiting now")
+    sys.exit(0)
 
 
 if __name__ == "__main__":

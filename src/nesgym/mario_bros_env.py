@@ -12,8 +12,8 @@ from .nesenv import NESEnv
 
 package_directory = os.path.dirname(os.path.abspath(__file__))
 
-delta_reward_by_life  = 500
-delta_reward_by_level = 5000
+delta_reward_by_life  = 1000
+delta_reward_by_level = 10000
 
 class MarioBrosEnv(NESEnv):
     def __init__(self):

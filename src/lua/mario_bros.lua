@@ -84,7 +84,7 @@ default_level = 1
 life = default_life
 level = default_level
 -- Either give 2 bonus life instead of dying, or reset
-max_nb_of_bonus_life_before_reset = 10
+max_nb_of_bonus_life_before_reset = 2
 nb_of_bonus_life_before_reset = 0
 
 -- XXX Experimental!
