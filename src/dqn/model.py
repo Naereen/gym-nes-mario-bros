@@ -58,6 +58,7 @@ class DoubleDQN(object):
                 target_update_freq=1000,
                 reward_decay=0.99,
                 exploration=LinearSchedule(5000, 0.1),
+                sample_from_q_vals=True,
                 log_dir="logs/",
                 name="DQN"):
         """ Double Deep Q Network
@@ -73,6 +74,7 @@ class DoubleDQN(object):
             training_batch_size: batch size for training base q network with gradient descent
             reward_decay: decay factor(called gamma in paper) of rewards that happen in the future
             exploration: used to generate an exploration factor(see 'epsilon-greedy' in paper). When rand(0,1) < epsilon, take random action; otherwise take greedy action.
+            sample_from_q_vals: True to sample from the distribution of action, False to always take the most likely (sample or argmax).
             log_dir: path to write tensorboard logs
         """
         super().__init__()
@@ -84,6 +86,7 @@ class DoubleDQN(object):
         self.target_update_freq  = target_update_freq
         self.reward_decay        = reward_decay
         self.exploration         = exploration
+        self.sample_from_q_vals  = sample_from_q_vals
 
         # use multiple frames as input to q network
         input_shape = image_shape[:-1] + (image_shape[-1] * frame_history_len,)
@@ -156,7 +159,10 @@ class DoubleDQN(object):
             # take action that results in maximum q value
             recent_obs = self.replay_buffer.encode_recent_observation()
             q_vals = self.base_model.predict_on_batch(np.array([recent_obs])).flatten()
-            action = np.argmax(q_vals)
+            if self.sample_from_q_vals:
+                action = np.random.choice(len(q_vals), p=q_vals/np.sum(q_vals))
+            else:
+                action = np.argmax(q_vals)
         return action
 
     def learn(self, step, action, reward, done, info=None):
