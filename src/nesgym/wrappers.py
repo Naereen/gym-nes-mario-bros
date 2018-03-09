@@ -76,8 +76,8 @@ def _process_frame84(frame, self=None, show=False):
         interpolation=cv2.INTER_LINEAR
     )
 
-    if CROPPED_WIDTH < RESHAPED_WIDTH or CROPPED_HEIGHT < RESHAPED_HEIGHT:
-        resized_screen = resized_screen[8:-5, :]
+    # if CROPPED_WIDTH < RESHAPED_WIDTH or CROPPED_HEIGHT < RESHAPED_HEIGHT:
+    resized_screen = resized_screen[8:-5, :]
 
     # DEBUG by showing the *observation* (to check the cropping)
     if show:
