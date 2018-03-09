@@ -52,6 +52,10 @@ def q_model(input_shape, num_actions):
     return Model(inputs, outputs)
 
 
+# XXX ValueError: probabilities are not non-negative
+SAMPLE_FROM_Q_VALS = False
+
+
 class DoubleDQN(object):
     def __init__(self,
                 image_shape,
@@ -64,7 +68,7 @@ class DoubleDQN(object):
                 target_update_freq=1000,
                 reward_decay=0.99,
                 exploration=LinearSchedule(5000, 0.1),
-                sample_from_q_vals=True,
+                sample_from_q_vals=SAMPLE_FROM_Q_VALS,
                 log_dir="logs/",
                 name="DQN"):
         """ Double Deep Q Network
