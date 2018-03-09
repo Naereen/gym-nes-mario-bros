@@ -169,8 +169,8 @@ palette_grayscale = np.array([(0.299*r+0.587*g+0.114*b) / 256.0 for r, g, b in p
 SCREEN_WIDTH, SCREEN_HEIGHT = 256, 224
 
 # XXX Change here if you want the DQN to learn from the frame and not the difference of successive frame
-USE_DIFFERENCE_OF_FRAMES = True
 USE_DIFFERENCE_OF_FRAMES = False
+USE_DIFFERENCE_OF_FRAMES = True
 
 
 class NESEnv(gym.Env, utils.EzPickle):

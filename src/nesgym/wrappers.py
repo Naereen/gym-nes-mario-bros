@@ -17,11 +17,15 @@ from .nesenv import SCREEN_HEIGHT, SCREEN_WIDTH
 
 # RESHAPED_WIDTH, RESHAPED_HEIGHT = SCREEN_HEIGHT, SCREEN_WIDTH
 # RESHAPED_WIDTH, RESHAPED_HEIGHT = 110, 84
+# CROPPED_WIDTH, CROPPED_HEIGHT = SCREEN_HEIGHT, SCREEN_WIDTH
 # CROPPED_WIDTH, CROPPED_HEIGHT = 89, 84
 
-# XXX I tried to reduce the size of the observation as much as possible!
+# # XXX I tried to reduce the size of the observation as much as possible!
 RESHAPED_WIDTH, RESHAPED_HEIGHT = 73, 64
 CROPPED_WIDTH, CROPPED_HEIGHT = 60, 64
+
+assert CROPPED_WIDTH <= RESHAPED_WIDTH, "Error: invalid value of CROPPED_WIDTH = {} > RESHAPED_WIDTH = {}...".format(CROPPED_WIDTH, RESHAPED_WIDTH)  # DEBUG
+assert CROPPED_HEIGHT <= RESHAPED_HEIGHT, "Error: invalid value of CROPPED_HEIGHT = {} > RESHAPED_HEIGHT = {}...".format(CROPPED_HEIGHT, RESHAPED_HEIGHT)  # DEBUG
 
 
 # XXX Change here if you want to debug and show each imframe
@@ -72,7 +76,8 @@ def _process_frame84(frame, self=None, show=False):
         interpolation=cv2.INTER_LINEAR
     )
 
-    resized_screen = resized_screen[8:-5, :]
+    if CROPPED_WIDTH < RESHAPED_WIDTH or CROPPED_HEIGHT < RESHAPED_HEIGHT:
+        resized_screen = resized_screen[8:-5, :]
 
     # DEBUG by showing the *observation* (to check the cropping)
     if show:
