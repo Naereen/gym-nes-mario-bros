@@ -59,7 +59,7 @@ For an example of lua file, see [`src/lua/soccer.lua`](src/lua/soccer.lua); for 
 ---
 
 ### :scroll: License ? [![GitHub license](https://img.shields.io/github/license/Naereen/gym-nes-mario-bros.svg)](https://github.com/Naereen/gym-nes-mario-bros/blob/master/LICENSE)
-This (small) repository are published under the terms of the [MIT license](http://lbesson.mit-license.org/) (file [LICENSE](LICENSE)).
+This (small) repository is published under the terms of the [MIT license](http://lbesson.mit-license.org/) (file [LICENSE](LICENSE)).
 © [Lilian Besson](https://GitHub.com/Naereen), 2018.
 
 [![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://GitHub.com/Naereen/gym-nes-mario-bros/graphs/commit-activity)
