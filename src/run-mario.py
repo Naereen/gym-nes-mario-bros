@@ -102,14 +102,14 @@ def mario_main(N=1, dqn_model_name=dqn_model_name):
                 num_actions=envs[0].action_space.n,
                 # # --- XXX heavy simulations
                 training_starts=10000,
-                target_update_freq=4000,
-                training_batch_size=64,
+                target_update_freq=2000,
+                training_batch_size=16,
                 # # --- XXX light simulations?
                 # training_starts=1000,
                 # target_update_freq=100,
                 # training_batch_size=4,
                 # --- Other parameters...
-                frame_history_len=8,  # XXX is it more efficient with history?
+                frame_history_len=16,  # XXX is it more efficient with history?
                 replay_buffer_size=500000,  # XXX reduce if MemoryError
                 # frame_history_len=4,  # XXX is it more efficient with history?
                 # replay_buffer_size=100000,  # XXX reduce if MemoryError
