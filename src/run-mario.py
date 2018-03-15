@@ -175,7 +175,7 @@ def mario_main(N=1, dqn_model_name=dqn_model_name):
                 reward = 0  # force this manually to avoid bug of getting -400 10 times in a row!
             dqn.learn(step, action, reward, done, info)
 
-            print("Step {:>6}, action {} (#{}), gave reward {:>6}, score {:>6} and max score {:>6}, life {:>2} and level {:>2}.".format(step, env0.actions[action], action, reward, info['score'], max_seen_score, info['life'], info['level']))  # DEBUG
+            print("Step {:>6}, action {:>2} (#{:>2}), gave reward {:>6}, score {:>6} and max score {:>6}, life {:>2} and level {:>2}.".format(step, env0.actions[action], action, reward, info['score'], max_seen_score, info['life'], info['level']))  # DEBUG
 
             if info['score'] > max_seen_score:
                 max_seen_score = info['score']

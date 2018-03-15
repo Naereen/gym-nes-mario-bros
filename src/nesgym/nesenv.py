@@ -202,7 +202,7 @@ class NESEnv(gym.Env, utils.EzPickle):
         self.level = 1
         self.delta_reward_by_level = 0
 
-        episode_time_length_secs = 240  # four minutes is the max time by episode!
+        episode_time_length_secs = 960  # 16 minutes is the max time by episode!
         # self.frame_skip = 1
         self.frame_skip = 2
         # self.frame_skip = 4
