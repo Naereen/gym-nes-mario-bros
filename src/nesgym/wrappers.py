@@ -13,7 +13,7 @@ import cv2
 import gym
 from gym import spaces
 
-from .nesenv import SCREEN_HEIGHT, SCREEN_WIDTH
+from .nesenv import SCREEN_HEIGHT, SCREEN_WIDTH, NB_COLORS_SCREEN, NB_COLORS_OBS
 
 # RESHAPED_WIDTH, RESHAPED_HEIGHT = SCREEN_HEIGHT, SCREEN_WIDTH
 # RESHAPED_WIDTH, RESHAPED_HEIGHT = 110, 84
@@ -35,8 +35,15 @@ if debug_imshow_each_frame:
     plt.interactive(True)
 
 
+# frame_skip = 1
+frame_skip = 2
+# frame_skip = 4
+# frame_skip = 8
+# frame_skip = 10
+
+
 class MaxAndSkipEnv(gym.Wrapper):
-    def __init__(self, env=None, skip=4):
+    def __init__(self, env=None, skip=frame_skip):
         """Return only every `skip`-th frame"""
         super(MaxAndSkipEnv, self).__init__(env)
         # most recent raw observations (for max pooling across time steps)
@@ -66,21 +73,47 @@ class MaxAndSkipEnv(gym.Wrapper):
 
 
 def _process_frame84(frame, self=None, show=False):
-    img = np.reshape(frame, [SCREEN_HEIGHT, SCREEN_WIDTH, 3]).astype(np.float32)
-    # I benchmarked, and cv2.resize is faster than skimage.transform.resize (by about 25%)
-    resized_screen = cv2.resize(
-          img[:, :, 0] * 0.299
-        + img[:, :, 1] * 0.587
-        + img[:, :, 2] * 0.114,
-        (RESHAPED_HEIGHT, RESHAPED_WIDTH),
-        interpolation=cv2.INTER_LINEAR
-    )
+    NB_COLORS = int(np.size(frame) // (SCREEN_HEIGHT * SCREEN_WIDTH))
+    if NB_COLORS > 1:
+        img = np.reshape(frame, [SCREEN_HEIGHT, SCREEN_WIDTH, NB_COLORS]).astype(np.float32)
+    else:
+        img = np.reshape(frame, [SCREEN_HEIGHT, SCREEN_WIDTH]).astype(np.float32)
 
-    # if CROPPED_WIDTH < RESHAPED_WIDTH or CROPPED_HEIGHT < RESHAPED_HEIGHT:
+    # # DEBUG by showing the *raw screen*
+    # if show:
+    #     print("Showing image of shape:", np.shape(img))  # DEBUG
+    #     if self is not None:
+    #         if self._imshow_obj is None:
+    #             self._imshow_obj = plt.imshow(img) #, cmap="gray")
+    #         else:
+    #             self._imshow_obj.set_data(img)
+    #     else:
+    #         plt.imshow(img) #, cmap="gray")
+    #     plt.show(block=False)
+    #     plt.draw()
+    #     print(input("[Close plot and enter to continue]"))  # DEBUG
+
+    # I benchmarked, and cv2.resize is faster than skimage.transform.resize (by about 25%)
+    if NB_COLORS == 3:
+        resized_screen = cv2.resize(
+              img[:, :, 0] * 0.299
+            + img[:, :, 1] * 0.587
+            + img[:, :, 2] * 0.114,
+            (RESHAPED_HEIGHT, RESHAPED_WIDTH),
+            interpolation=cv2.INTER_LINEAR
+        )
+    else:
+        resized_screen = cv2.resize(
+            img,
+            (RESHAPED_HEIGHT, RESHAPED_WIDTH),
+            interpolation=cv2.INTER_LINEAR
+        )
+
     resized_screen = resized_screen[8:-5, :]
 
     # DEBUG by showing the *observation* (to check the cropping)
     if show:
+        print("Showing image of shape:", np.shape(resized_screen))  # DEBUG
         if self is not None:
             if self._imshow_obj is None:
                 self._imshow_obj = plt.imshow(resized_screen, cmap="gray")

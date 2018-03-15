@@ -141,7 +141,7 @@ class ReplayBuffer(object):
                 start_idx = idx + 1
         missing_context = self.frame_history_len - (end_idx - start_idx)
         # if zero padding is needed for missing context
-        # or we are on the boundry of the buffer
+        # or we are on the boundary of the buffer
         if start_idx < 0 or missing_context > 0:
             frames = [np.zeros_like(self.obs[0])
                       for _ in range(missing_context)]

@@ -168,6 +168,10 @@ palette_grayscale = np.array([(0.299*r+0.587*g+0.114*b) / 256.0 for r, g, b in p
 
 SCREEN_WIDTH, SCREEN_HEIGHT = 256, 224
 
+# See https://github.com/Naereen/gym-nes-mario-bros/issues/5
+NB_COLORS_SCREEN = 3
+NB_COLORS_OBS = 1
+
 # XXX Change here if you want the DQN to learn from the frame and not the difference of successive frame
 USE_DIFFERENCE_OF_FRAMES = False
 USE_DIFFERENCE_OF_FRAMES = True
@@ -183,8 +187,9 @@ class NESEnv(gym.Env, utils.EzPickle):
         self._update_emulatornumber()
         print("Info: Using emulator number {} ...".format(self._emulatornumber))  # DEBUG
 
-        self.last_screen = np.zeros((SCREEN_HEIGHT, SCREEN_WIDTH, 3), dtype=np.uint8)
-        self.screen = np.zeros((SCREEN_HEIGHT, SCREEN_WIDTH, 3), dtype=np.uint8)
+        self.raw_screen = np.zeros((SCREEN_HEIGHT, SCREEN_WIDTH, NB_COLORS_OBS), dtype=np.uint8)
+        self.last_screen = np.zeros((SCREEN_HEIGHT, SCREEN_WIDTH, NB_COLORS_OBS), dtype=np.uint8)
+        self.screen = np.zeros((SCREEN_HEIGHT, SCREEN_WIDTH, NB_COLORS_SCREEN), dtype=np.uint8)
         self.closed = False
         self.can_send_command = True
         self.command_cond = Condition()
@@ -199,12 +204,14 @@ class NESEnv(gym.Env, utils.EzPickle):
 
         episode_time_length_secs = 240  # four minutes is the max time by episode!
         # self.frame_skip = 1
+        self.frame_skip = 2
+        # self.frame_skip = 4
+        # self.frame_skip = 8
         # self.frame_skip = 10
-        self.frame_skip = 4
 
         # XXX 60 if human mode, about 120 if maximum speed
-        # fps = 60
-        fps = 120
+        fps = 60
+        # fps = 120
         self.episode_length = episode_time_length_secs * fps / self.frame_skip
 
         # All the possible actions.  Try to use the smallest
@@ -239,8 +246,8 @@ class NESEnv(gym.Env, utils.EzPickle):
             self.frame = 0
         if USE_DIFFERENCE_OF_FRAMES:
             # WARNING Use difference of consecutive screens instead of just the screen
-            obs = self.screen[:] - self.last_screen[:]
-            self.last_screen[:] = self.screen[:]
+            obs = self.raw_screen[:] - self.last_screen[:]
+            self.last_screen[:] = self.raw_screen[:]
             # DEBUG Use .copy() if this [:] indexing hack don't work
         else:
             obs = self.screen[:]
@@ -357,8 +364,9 @@ class NESEnv(gym.Env, utils.EzPickle):
                     screen_pixels = body[2]
                     pvs = np.array(struct.unpack('B'*len(screen_pixels), screen_pixels))
                     # palette values received from lua are offset by 20 to avoid '\n's
+                    self.raw_screen = pvs.reshape((SCREEN_HEIGHT, SCREEN_WIDTH, NB_COLORS_OBS))
                     pvs = np.array(palette_rgb[pvs-20], dtype=np.uint8)
-                    self.screen = pvs.reshape((SCREEN_HEIGHT, SCREEN_WIDTH, 3))
+                    self.screen = pvs.reshape((SCREEN_HEIGHT, SCREEN_WIDTH, NB_COLORS_SCREEN))
                 elif msg_type == "data":
                     # print("(from Python) received data =", body[2])  # DEBUG
                     # XXX new format is %02x%06i%02x%02x", reward, score, life, level

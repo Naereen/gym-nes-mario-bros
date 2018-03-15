@@ -35,8 +35,8 @@ def q_function(input_shape, num_actions):
     image_input = Input(shape=input_shape)
     out = Conv2D(filters=32, kernel_size=8, strides=(4, 4), padding='valid', activation='relu')(image_input)
 
-    out = Conv2D(filters=64, kernel_size=4, strides=(2, 2), padding='valid', activation='relu')(out)
-    # out = Conv2D(filters=32, kernel_size=4, strides=(2, 2), padding='valid', activation='relu')(out)
+    # out = Conv2D(filters=64, kernel_size=4, strides=(2, 2), padding='valid', activation='relu')(out)
+    out = Conv2D(filters=32, kernel_size=4, strides=(2, 2), padding='valid', activation='relu')(out)
 
     # out = Conv2D(filters=64, kernel_size=3, strides=(1, 1), padding='valid', activation='relu')(out)
     out = Conv2D(filters=32, kernel_size=3, strides=(1, 1), padding='valid', activation='relu')(out)
@@ -73,10 +73,12 @@ class DoubleDQN(object):
                 training_batch_size=32,
                 target_update_freq=1000,
                 reward_decay=0.99,
-                exploration=LinearSchedule(5000, 0.1),
+                exploration=None,
                 sample_from_q_vals=SAMPLE_FROM_Q_VALS,
                 log_dir="logs/",
-                name="DQN"):
+                name="DQN",
+                optimizer=None
+            ):
         """ Double Deep Q Network
 
             Parameters
@@ -101,6 +103,8 @@ class DoubleDQN(object):
         self.training_batch_size = training_batch_size
         self.target_update_freq  = target_update_freq
         self.reward_decay        = reward_decay
+        if exploration is None:
+            exploration = LinearSchedule(5000, 0.1)
         self.exploration         = exploration
         self.sample_from_q_vals  = sample_from_q_vals
 
@@ -108,7 +112,9 @@ class DoubleDQN(object):
         input_shape = image_shape[:-1] + (image_shape[-1] * frame_history_len,)
         # used to choose action
         self.base_model = q_model(input_shape, num_actions)
-        self.base_model.compile(optimizer=optimizers.adam(clipnorm=10, lr=1e-4, decay=1e-6, epsilon=1e-4), loss='mse')
+        if optimizer is None:
+            optimizer = optimizers.adam(clipnorm=10, lr=1e-4, decay=1e-6, epsilon=1e-4)
+        self.base_model.compile(optimizer=optimizer, loss='mse')
         # used to estimate q values
         self.target_model = q_model(input_shape, num_actions)
 

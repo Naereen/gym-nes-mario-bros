@@ -70,13 +70,20 @@ def log_max_seen_score(step, max_seen_score, max_seen_score_csv):
 def mario_main(N=1, dqn_model_name=dqn_model_name):
     envs = get_envs(N=N)
 
+    # env = envs[0].env.env.env.env
+    env = envs[0]
+    while hasattr(env, 'env'):
+        env = env.env
+    env0 = env
+
     last_observations = [ 0 for env in envs ]
     # FIXME finish the support for running emulators in parallel
     for emulatornumber, env in enumerate(envs):
         last_observations[emulatornumber] = env.reset()
 
     try:
-        _emulatornumber = envs[0].env.env.env.env._emulatornumber
+        # _emulatornumber = envs[0].env.env.env.env._emulatornumber
+        _emulatornumber = env0._emulatornumber
     except:
         _emulatornumber = 0
     dqn_model_name = "{}-{}".format(dqn_model_name, _emulatornumber)
@@ -98,24 +105,25 @@ def mario_main(N=1, dqn_model_name=dqn_model_name):
         ], outside_value=0.01
     )
 
-    dqn = DoubleDQN(image_shape=(CROPPED_WIDTH, CROPPED_HEIGHT, 1),
-                num_actions=envs[0].action_space.n,
-                # # --- XXX heavy simulations
-                training_starts=10000,
-                target_update_freq=2000,
-                training_batch_size=16,
-                # # --- XXX light simulations?
-                # training_starts=1000,
-                # target_update_freq=100,
-                # training_batch_size=4,
-                # --- Other parameters...
-                frame_history_len=16,  # XXX is it more efficient with history?
-                replay_buffer_size=500000,  # XXX reduce if MemoryError
-                # frame_history_len=4,  # XXX is it more efficient with history?
-                # replay_buffer_size=100000,  # XXX reduce if MemoryError
-                exploration=exploration_schedule,
-                name=dqn_model_name
-            )
+    dqn = DoubleDQN(
+        image_shape=(CROPPED_WIDTH, CROPPED_HEIGHT, 1),
+        num_actions=envs[0].action_space.n,
+        # # --- XXX heavy simulations
+        training_starts=10000,
+        target_update_freq=2000,
+        training_batch_size=16,
+        # # --- XXX light simulations?
+        # training_starts=1000,
+        # target_update_freq=100,
+        # training_batch_size=4,
+        # --- Other parameters...
+        frame_history_len=8,  # XXX is it more efficient with history?
+        replay_buffer_size=500000,  # XXX reduce if MemoryError
+        # frame_history_len=4,  # XXX is it more efficient with history?
+        # replay_buffer_size=100000,  # XXX reduce if MemoryError
+        exploration=exploration_schedule,
+        name=dqn_model_name
+    )
 
     # How to save the DQN to a file after every training
     # in order to resume from previous step if training was stopped?
@@ -167,7 +175,7 @@ def mario_main(N=1, dqn_model_name=dqn_model_name):
                 reward = 0  # force this manually to avoid bug of getting -400 10 times in a row!
             dqn.learn(step, action, reward, done, info)
 
-            print("Step {:>6}, action {}, gave reward {:>6}, score {:>6} and max score {:>6}, life {:>2} and level {:>2}.".format(step, action, reward, info['score'], max_seen_score, info['life'], info['level']))  # DEBUG
+            print("Step {:>6}, action {} (#{}), gave reward {:>6}, score {:>6} and max score {:>6}, life {:>2} and level {:>2}.".format(step, env0.actions[action], action, reward, info['score'], max_seen_score, info['life'], info['level']))  # DEBUG
 
             if info['score'] > max_seen_score:
                 max_seen_score = info['score']

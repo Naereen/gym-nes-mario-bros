@@ -28,6 +28,5 @@ register(
     max_episode_steps=9999999,
     reward_threshold=32000,
     kwargs={},
-    # FIXME I'm pretty sure the game is deterministic! Let see...
-    nondeterministic=False,
+    nondeterministic=True,
 )

@@ -53,6 +53,10 @@ For an example of lua file, see [`src/lua/soccer.lua`](src/lua/soccer.lua); for 
 ![images/mario.png](images/mario.png)
 > *That's new!*
 
+Architecture of the DQN playning mario:
+
+![images/dqn_base.png](images/dqn_base.png)
+
 ### Soccer game
 ![images/soccer.png](images/soccer.png)
 
