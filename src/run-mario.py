@@ -81,7 +81,7 @@ def mario_main(N=1, dqn_model_name=dqn_model_name):
         _emulatornumber = 0
     dqn_model_name = "{}-{}".format(dqn_model_name, _emulatornumber)
 
-    max_timesteps = 1000000
+    max_timesteps = 10000000  # 10 millions steps for 216996 parameters...
     max_seen_score = 0
 
     # Create the log file if needed
