@@ -13,7 +13,7 @@ import numpy as np
 import keras
 from keras.layers.convolutional import Conv2D
 from keras.layers.core import Flatten
-from keras.layers import Dense, Input
+from keras.layers import Dense, Input, MaxPooling2D
 from keras.models import Model, load_model, save_model
 from keras import optimizers
 # from keras.callbacks import TensorBoard
@@ -27,26 +27,38 @@ from .utils import LinearSchedule, PiecewiseSchedule
 debug_print = True
 debug_print = False
 
+# WARNING try both! Not sure what it does... No doc!
+padding = 'valid'
+padding = 'same'
+
 
 def q_function(input_shape, num_actions):
     """Description of the Q-function as Keras model."""
     # See also https://github.com/PacktPublishing/Practical-Deep-Reinforcement-Learning/blob/2e16284bb7661a7edd908cefc5fe2cfb55ac57d8/ch07/lib/dqn_model.py#L64
+    # https://github.com/keras-rl/keras-rl/blob/master/rl/agents/dqn.py
+    # https://github.com/yunjhongwu/Double-DQN-Breakout/blob/master/Player.py#L17
     # FIXME find the best possible architecture!
     image_input = Input(shape=input_shape)
-    out = Conv2D(filters=32, kernel_size=8, strides=(4, 4), padding='valid', activation='relu')(image_input)
 
-    # out = Conv2D(filters=64, kernel_size=4, strides=(2, 2), padding='valid', activation='relu')(out)
-    out = Conv2D(filters=32, kernel_size=4, strides=(2, 2), padding='valid', activation='relu')(out)
+    # https://keras.io/layers/convolutional/#conv2d
+    out = Conv2D(filters=32, kernel_size=8, strides=(4, 4), padding=padding, activation='relu')(image_input)
 
-    # out = Conv2D(filters=64, kernel_size=3, strides=(1, 1), padding='valid', activation='relu')(out)
-    out = Conv2D(filters=32, kernel_size=3, strides=(1, 1), padding='valid', activation='relu')(out)
-    # out = Conv2D(filters=64, kernel_size=2, strides=(1, 1), padding='valid', activation='relu')(out)
+    out = Conv2D(filters=64, kernel_size=4, strides=(2, 2), padding=padding, activation='relu')(out)
+    # out = Conv2D(filters=32, kernel_size=4, strides=(2, 2), padding=padding, activation='relu')(out)
+
+    out = Conv2D(filters=64, kernel_size=3, strides=(1, 1), padding=padding, activation='relu')(out)
+    # out = Conv2D(filters=32, kernel_size=3, strides=(1, 1), padding=padding, activation='relu')(out)
+    # out = Conv2D(filters=64, kernel_size=2, strides=(1, 1), padding=padding, activation='relu')(out)
+
+    # WARNING not sure!
+    out = MaxPooling2D(pool_size=(2, 2))(out)
 
     out = Flatten()(out)
 
     # out = Dense(512, activation='relu')(out)
-    out = Dense(256, activation='relu')(out)
-    # out = Dense(128, activation='relu')(out)
+    # out = Dense(256, activation='relu')(out)
+    out = Dense(128, activation='relu')(out)
+    out = Dense(128, activation='relu')(out)
 
     q_value = Dense(num_actions)(out)
 
