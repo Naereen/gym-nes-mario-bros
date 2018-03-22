@@ -96,8 +96,8 @@ end
 
 -- update screen every screen_update_interval frames
 -- frame_skip = 1
-frame_skip = 2
--- frame_skip = 4
+-- frame_skip = 2
+frame_skip = 4
 -- frame_skip = 8
 
 while true do

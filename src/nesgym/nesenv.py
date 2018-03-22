@@ -204,8 +204,8 @@ class NESEnv(gym.Env, utils.EzPickle):
 
         episode_time_length_secs = 2*960  # 16 minutes is the max time by episode!
         # self.frame_skip = 1
-        self.frame_skip = 2
-        # self.frame_skip = 4
+        # self.frame_skip = 2
+        self.frame_skip = 4
         # self.frame_skip = 8
         # self.frame_skip = 10
 
@@ -262,6 +262,9 @@ class NESEnv(gym.Env, utils.EzPickle):
                 self.command_cond.wait()
             self.can_send_command = False
         self._joypad(self.actions[action])
+        # FIXME hack to change reward if going right
+        if self.actions[action] == 'BR':
+            self.reward += 100
         return obs, self.reward, done, info
 
     def _reset(self):

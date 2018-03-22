@@ -36,8 +36,8 @@ if debug_imshow_each_frame:
 
 
 # frame_skip = 1
-frame_skip = 2
-# frame_skip = 4
+# frame_skip = 2
+frame_skip = 4
 # frame_skip = 8
 # frame_skip = 10
 

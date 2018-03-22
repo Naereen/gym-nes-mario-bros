@@ -51,14 +51,14 @@ def q_function(input_shape, num_actions):
     # out = Conv2D(filters=64, kernel_size=2, strides=(1, 1), padding=padding, activation='relu')(out)
 
     # WARNING not sure!
-    out = MaxPooling2D(pool_size=(2, 2))(out)
+    # out = MaxPooling2D(pool_size=(2, 2))(out)
 
     out = Flatten()(out)
 
     # out = Dense(512, activation='relu')(out)
-    # out = Dense(256, activation='relu')(out)
-    out = Dense(128, activation='relu')(out)
-    out = Dense(128, activation='relu')(out)
+    out = Dense(256, activation='relu')(out)
+    # out = Dense(128, activation='relu')(out)
+    # out = Dense(128, activation='relu')(out)
 
     q_value = Dense(num_actions)(out)
 
