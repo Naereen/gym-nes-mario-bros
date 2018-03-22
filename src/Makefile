@@ -1,5 +1,5 @@
 run:	run_mario
-run_mario:	cleanpipes
+run_mario:	clean
 	-pkill -9 fceux
 	clear
 	# echo 0 > /tmp/nesgym-pipe-number.txt
@@ -14,15 +14,36 @@ run_mario1:
 	-python3 run-mario.py
 	# -pkill -9 fceux
 
+clean:	cleanscores cleanpipes
+
+cleanscores:
+	rm -vf *h5 *json *csv
+
 cleanpipes:
 	rm -vf /tmp/nesgym-pipe*
 
-soccer:
+soccer:	cleanscores
 	-pkill -9 fceux
 	clear
 	-python3 run-soccer.py
 	-pkill -9 fceux
 
-atari:
+atari:	cleanscores
 	clear
 	-python3 run-atari.py
+
+pong:	cleanscores
+	clear
+	-python3 run-atari.py pong
+
+breakout:	cleanscores
+	clear
+	-python3 run-atari.py breakout
+
+pacman:	cleanscores
+	clear
+	-python3 run-atari.py pacman
+
+invaders:	cleanscores
+	clear
+	-python3 run-atari.py invaders

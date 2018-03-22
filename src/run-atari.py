@@ -23,10 +23,9 @@ def get_env(task, seed):
     return env
 
 
-def atari_main():
+def atari_main(env_id='Pong-v0'):
     # Run training
-    env_id = 'Breakout-v0'
-    max_timesteps = 100000
+    max_timesteps = 1000000
     print('task: ', env_id, 'max steps: ', max_timesteps)
     env = gym.make(env_id)
 
@@ -42,18 +41,18 @@ def atari_main():
 
     dqn = DoubleDQN(
                     # image_shape=(84, 84, 1),
-                    image_shape=(210, 160, 3),
+                    image_shape=(210, 160, 3),  # FIXME debug this!
                     num_actions=env.action_space.n,
                     # # --- XXX heavy simulations
-                    # training_starts=50000,
-                    # target_update_freq=10000,
-                    # training_batch_size=32,
-                    # training_freq=4,
-                    # # --- XXX light simulations?
-                    training_starts=1000,
-                    target_update_freq=100,
-                    training_batch_size=4,
+                    training_starts=50000,
+                    target_update_freq=10000,
+                    training_batch_size=32,
                     training_freq=4,
+                    # # --- XXX light simulations?
+                    # training_starts=1000,
+                    # target_update_freq=100,
+                    # training_batch_size=4,
+                    # training_freq=4,
                     # --- Other parameters...
                     frame_history_len=1,  # XXX is it more efficient with history?
                     replay_buffer_size=10000,  # XXX reduce if MemoryError
@@ -62,21 +61,29 @@ def atari_main():
                     exploration=exploration_schedule
                 )
 
+    dqn.summary()
+
     reward_sum_episode = 0
     num_episodes = 0
     episode_rewards = deque(maxlen=100)
+
     for step in range(max_timesteps):
         if step > 0 and step % 1000 == 0:
             print('step: ', step, 'episodes:', num_episodes, 'epsilon:', exploration_schedule.value(step),
                   'learning rate:', dqn.get_learning_rate(), 'last 100 training loss mean', dqn.get_avg_loss(),
                   'last 100 episode mean rewards: ', np.mean(np.array(episode_rewards, dtype=np.float32)))
+        # if step > 0 and step % 100 == 0:
+        #     dqn.summary()
+
         env.render()
+
         action = dqn.choose_action(step, last_obs)
         obs, reward, done, info = env.step(action)
         reward_sum_episode += reward
         dqn.learn(step, action, reward, done, info)
 
-        print("Step {:>6}, action #{:>2}, gave reward {:>6}.".format(step, action, reward))  # DEBUG
+        # print("Step {:>6}, action #{:>2}, gave reward {:>6}.".format(step, action, reward))  # DEBUG
+
         if done:
             last_obs = env.reset()
             episode_rewards.append(reward_sum_episode)
@@ -87,4 +94,20 @@ def atari_main():
 
 
 if __name__ == "__main__":
-    atari_main()
+    import sys
+    env_id = 'Pong-v0'  # --> OK the DQN model works!
+
+    # https://gym.openai.com/envs/#atari
+    if any('pong' in arg for arg in sys.argv):
+        env_id = 'Pong-v0'  # --> OK the DQN model works!
+
+    if any('breakout' in arg for arg in sys.argv):
+        env_id = 'Breakout-v0'
+
+    if any('pacman' in arg for arg in sys.argv):
+        env_id = 'MsPacman-v0'
+
+    if any('invaders' in arg for arg in sys.argv):
+        env_id = 'SpaceInvaders-v0'
+
+    atari_main(env_id=env_id)
