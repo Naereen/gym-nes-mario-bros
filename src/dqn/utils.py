@@ -40,7 +40,7 @@ class PiecewiseSchedule(object):
             raised when outside value is requested.
         """
         indexes = [e[0] for e in endpoints]
-        assert indexes == sorted(indexes)
+        # assert indexes == sorted(indexes)
         self._interpolation = interpolation
         self._outside_value = outside_value
         self._endpoints = endpoints

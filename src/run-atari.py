@@ -19,64 +19,14 @@ def get_env(task, seed):
     env_id = task.env_id
     env = gym.make(env_id)
     env.seed(seed)
-
     env = wrap_deepmind(env)
-
     return env
-
-
-def old_atari_main():
-    # Get Atari games.
-    seed = 0 # Use a seed of zero (you may want to randomize the seed!)
-    env = get_env(task, seed)
-
-    last_obs = env.reset()
-
-    exploration_schedule = PiecewiseSchedule(
-        [
-            (0, 1.0),
-            (1e6, 0.1),
-            (task.max_timesteps / 2, 0.01),
-        ], outside_value=0.01
-    )
-
-    dqn = DoubleDQN(image_shape=(84, 84, 1),
-                    num_actions=env.action_space.n,
-                    training_starts=50000,
-                    target_update_freq=10000,
-                    training_batch_size=32,
-                    # training_starts=2000,
-                    # target_update_freq=500,
-                    # training_batch_size=3,
-                    exploration=exploration_schedule
-                   )
-
-    reward_sum_episode = 0
-    num_episodes = 0
-    episode_rewards = deque(maxlen=100)
-    for step in range(task.max_timesteps):
-        if step > 0 and step % 1000 == 0:
-            print('step: ', step, 'episodes:', num_episodes, 'epsilon:', exploration_schedule.value(step),
-                  'learning rate:', dqn.get_learning_rate(), 'last 100 training loss mean', dqn.get_avg_loss(),
-                  'last 100 episode mean rewards: ', np.mean(np.array(episode_rewards, dtype=np.float32)))
-        env.render()
-        action = dqn.choose_action(step, last_obs)
-        obs, reward, done, info = env.step(action)
-        reward_sum_episode += reward
-        dqn.learn(step, action, reward, done, info)
-        if done:
-            last_obs = env.reset()
-            episode_rewards.append(reward_sum_episode)
-            reward_sum_episode = 0
-            num_episodes += 1
-        else:
-            last_obs = obs
 
 
 def atari_main():
     # Run training
     env_id = 'Breakout-v0'
-    max_timesteps = 1000
+    max_timesteps = 100000
     print('task: ', env_id, 'max steps: ', max_timesteps)
     env = gym.make(env_id)
 
@@ -90,16 +40,27 @@ def atari_main():
         ], outside_value=0.01
     )
 
-    dqn = DoubleDQN(image_shape=(84, 84, 1),
+    dqn = DoubleDQN(
+                    # image_shape=(84, 84, 1),
+                    image_shape=(210, 160, 3),
                     num_actions=env.action_space.n,
-                    training_starts=50000,
-                    target_update_freq=10000,
-                    training_batch_size=32,
-                    # training_starts=2000,
-                    # target_update_freq=500,
-                    # training_batch_size=3,
+                    # # --- XXX heavy simulations
+                    # training_starts=50000,
+                    # target_update_freq=10000,
+                    # training_batch_size=32,
+                    # training_freq=4,
+                    # # --- XXX light simulations?
+                    training_starts=1000,
+                    target_update_freq=100,
+                    training_batch_size=4,
+                    training_freq=4,
+                    # --- Other parameters...
+                    frame_history_len=1,  # XXX is it more efficient with history?
+                    replay_buffer_size=10000,  # XXX reduce if MemoryError
+                    # frame_history_len=8,  # XXX is it more efficient with history?
+                    # replay_buffer_size=100000,  # XXX reduce if MemoryError
                     exploration=exploration_schedule
-                   )
+                )
 
     reward_sum_episode = 0
     num_episodes = 0
@@ -114,6 +75,8 @@ def atari_main():
         obs, reward, done, info = env.step(action)
         reward_sum_episode += reward
         dqn.learn(step, action, reward, done, info)
+
+        print("Step {:>6}, action #{:>2}, gave reward {:>6}.".format(step, action, reward))  # DEBUG
         if done:
             last_obs = env.reset()
             episode_rewards.append(reward_sum_episode)

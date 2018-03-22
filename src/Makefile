@@ -17,9 +17,12 @@ run_mario1:
 cleanpipes:
 	rm -vf /tmp/nesgym-pipe*
 
-# DEBUG bring back first name for this
-old_run_soccer:
+soccer:
 	-pkill -9 fceux
 	clear
 	-python3 run-soccer.py
 	-pkill -9 fceux
+
+atari:
+	clear
+	-python3 run-atari.py

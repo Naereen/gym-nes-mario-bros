@@ -173,8 +173,8 @@ NB_COLORS_SCREEN = 3
 NB_COLORS_OBS = 1
 
 # XXX Change here if you want the DQN to learn from the frame and not the difference of successive frame
-USE_DIFFERENCE_OF_FRAMES = False
 USE_DIFFERENCE_OF_FRAMES = True
+USE_DIFFERENCE_OF_FRAMES = False
 
 
 class NESEnv(gym.Env, utils.EzPickle):

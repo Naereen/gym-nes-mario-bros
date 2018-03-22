@@ -56,7 +56,7 @@ def q_function(input_shape, num_actions):
     out = Flatten()(out)
 
     # out = Dense(512, activation='relu')(out)
-    out = Dense(256, activation='relu')(out)
+    # out = Dense(256, activation='relu')(out)
     # out = Dense(128, activation='relu')(out)
     # out = Dense(128, activation='relu')(out)
 
