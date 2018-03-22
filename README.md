@@ -57,6 +57,10 @@ Architecture of the DQN playning mario:
 
 ![images/dqn_base.png](images/dqn_base.png)
 
+Overview of the experimentation with 3 emulators:
+
+![images/record_mario.gif](images/record_mario.gif)
+
 ### Soccer game
 ![images/soccer.png](images/soccer.png)
 
