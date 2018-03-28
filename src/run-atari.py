@@ -25,7 +25,7 @@ def get_env(task, seed):
 
 def atari_main(env_id='Pong-v0'):
     # Run training
-    max_timesteps = 1000000
+    max_timesteps = 100000
     print('task: ', env_id, 'max steps: ', max_timesteps)
     env = gym.make(env_id)
 
@@ -44,8 +44,8 @@ def atari_main(env_id='Pong-v0'):
                     image_shape=(210, 160, 3),  # FIXME debug this!
                     num_actions=env.action_space.n,
                     # # --- XXX heavy simulations
-                    training_starts=50000,
-                    target_update_freq=10000,
+                    training_starts=10000,
+                    target_update_freq=1000,
                     training_batch_size=32,
                     training_freq=4,
                     # # --- XXX light simulations?
@@ -54,10 +54,10 @@ def atari_main(env_id='Pong-v0'):
                     # training_batch_size=4,
                     # training_freq=4,
                     # --- Other parameters...
-                    frame_history_len=1,  # XXX is it more efficient with history?
-                    replay_buffer_size=10000,  # XXX reduce if MemoryError
-                    # frame_history_len=8,  # XXX is it more efficient with history?
-                    # replay_buffer_size=100000,  # XXX reduce if MemoryError
+                    # frame_history_len=1,  # XXX is it more efficient with history?
+                    # replay_buffer_size=10000,  # XXX reduce if MemoryError
+                    frame_history_len=8,  # XXX is it more efficient with history?
+                    replay_buffer_size=100000,  # XXX reduce if MemoryError
                     exploration=exploration_schedule
                 )
 
