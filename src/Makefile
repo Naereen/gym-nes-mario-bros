@@ -1,5 +1,5 @@
-run:	run_mario
-run_mario:	clean
+run:	mario
+mario:	clean
 	-pkill -9 fceux
 	clear
 	# echo 0 > /tmp/nesgym-pipe-number.txt
@@ -7,7 +7,7 @@ run_mario:	clean
 	-pkill -9 fceux
 
 # Experiment to launch a second emulator manually
-run_mario1:
+mario1:
 	# -pkill -9 fceux
 	clear
 	# echo 0 > /tmp/nesgym-pipe-number.txt
