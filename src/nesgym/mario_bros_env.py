@@ -32,7 +32,7 @@ class MarioBrosEnv(NESEnv):
             'LA',   # left+jump
             # 'R',    # right
             'RA',   # right+jump
-            'B',    # run  XXX does nothing! Is it good to have an action that does nothing?
+            # 'B',    # run  XXX does nothing! Is it good to have an action that does nothing?
             # 'BA',   # run+jump
             'BL',   # run+left
             'BR',   # run+right

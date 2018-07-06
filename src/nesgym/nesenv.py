@@ -262,9 +262,12 @@ class NESEnv(gym.Env, utils.EzPickle):
                 self.command_cond.wait()
             self.can_send_command = False
         self._joypad(self.actions[action])
-        # FIXME hack to change reward if going right
-        if self.actions[action] == 'BR':
-            self.reward += 100
+        # FIXME hack to give 1 reward if still alive!
+        if self.reward == 0:
+            self.reward = 1
+        # # FIXME hack to change reward if going right
+        # if self.actions[action] == 'BR':
+        #     self.reward += 100
         return obs, self.reward, done, info
 
     def _reset(self):
